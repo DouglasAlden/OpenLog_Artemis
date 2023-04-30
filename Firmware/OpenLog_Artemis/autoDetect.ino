@@ -291,6 +291,12 @@ bool addDevice(deviceType_e deviceType, uint8_t address, uint8_t muxAddress, uin
         temp->configPtr = new struct_ADS1015;
       }
       break;
+    case DEVICE_BMP581:
+      {
+        temp->classPtr = new BMP581;
+        temp->configPtr = new struct_BMP581;
+      }
+      break;
     default:
       SerialPrintf2("addDevice Device type not found: %d\r\n", deviceType);
       break;
@@ -603,6 +609,16 @@ bool beginQwiicDevices()
           struct_ADS1015 *nodeSetting = (struct_ADS1015 *)temp->configPtr; //Create a local pointer that points to same spot as node does
           if (nodeSetting->powerOnDelayMillis > qwiicPowerOnDelayMillis) qwiicPowerOnDelayMillis = nodeSetting->powerOnDelayMillis; // Increase qwiicPowerOnDelayMillis if required
           if (tempDevice->begin(temp->address, qwiic)) //address, Wire port
+            temp->online = true;
+        }
+        break;
+      case DEVICE_BMP581:
+        {
+          BMP581 *tempDevice = (BMP581 *)temp->classPtr;
+          struct_BMP581 *nodeSetting = (struct_BMP581 *)temp->configPtr; //Create a local pointer that points to same spot as node does
+          if (nodeSetting->powerOnDelayMillis > qwiicPowerOnDelayMillis) qwiicPowerOnDelayMillis = nodeSetting->powerOnDelayMillis; // Increase qwiicPowerOnDelayMillis if required
+
+          if (tempDevice->beginI2C(temp->address, qwiic)) //address, Wire port
             temp->online = true;
         }
         break;
@@ -980,6 +996,10 @@ void configureDevice(node * temp)
         sensor->useConversionReady(true);
       }
       break;
+    case DEVICE_BMP581:
+      //Nothing to configure
+      break;
+      
     default:
       SerialPrintf3("configureDevice: Unknown device type %d: %s\r\n", deviceType, getDeviceName((deviceType_e)deviceType));
       break;
@@ -1100,6 +1120,9 @@ FunctionPointer getConfigFunctionPtr(uint8_t nodeNumber)
       break;
     case DEVICE_ADS1015:
       ptr = (FunctionPointer)menuConfigure_ADS1015;
+      break;
+    case DEVICE_BMP581:
+      ptr = (FunctionPointer)menuConfigure_BMP581;
       break;
     default:
       SerialPrintln(F("getConfigFunctionPtr: Unknown device type"));
@@ -1240,6 +1263,7 @@ void swap(struct node * a, struct node * b)
 #define ADR_MS8607 0x40 //Humidity portion of the MS8607 sensor
 #define ADR_UBLOX 0x42 //But can be set to any address
 #define ADR_ADS122C04 0x45 //Alternates: 0x44, 0x41 and 0x40
+#define ADR_BMP581 0x47 //Alternates: 0x46
 #define ADR_TMP117 0x48 //Alternates: 0x49, 0x4A, and 0x4B
 #define ADR_ADS1015 0x48 //Alternates: 0x49, 0x4A, and 0x4B
 #define ADR_BIO_SENSOR_HUB 0x55
@@ -1387,6 +1411,14 @@ deviceType_e testDevice(uint8_t i2cAddress, uint8_t muxAddress, uint8_t portNumb
         if (sensor.begin(i2cAddress, qwiic) == true) //Address, Wire port
           return (DEVICE_ADC_ADS122C04);
       }
+      break;
+    case 0x47:
+      {
+        //Confidence: High - ID check but may pass with BMP581
+        BMP581 sensor;
+        if (sensor.beginI2C(i2cAddress, qwiic) == true) //Wire port
+          return (DEVICE_BMP581);
+      } 
       break;
     case 0x48:
     case 0x49:
@@ -1864,6 +1896,9 @@ const char* getDeviceName(deviceType_e deviceNumber)
       break;
     case DEVICE_ADS1015:
       return "ADC-ADS1015";
+      break;
+    case DEVICE_BMP581:
+      return "Pressure-BMP581";
       break;
 
     case DEVICE_UNKNOWN_DEVICE:

@@ -368,6 +368,8 @@ void menuAttachedDevices()
             break;
           case DEVICE_ADS1015:
             SerialPrintf3("%s ADS1015 ADC %s\r\n", strDeviceMenu, strAddress);
+          case DEVICE_BMP581:
+            SerialPrintf3("%s BMP581 Barometric Pressure/Temp Sensor %s\r\n", strDeviceMenu, strAddress);
             break;
           default:
             SerialPrintf2("Unknown device type %d in menuAttachedDevices\r\n", temp->deviceType);
@@ -3184,3 +3186,55 @@ void menuConfigure_ADS1015(void *configPtr)
       printUnknown(incoming);
   }
 }
+
+void menuConfigure_BMP581(void *configPtr)
+{
+  struct_BMP581 *sensorSetting = (struct_BMP581*)configPtr;
+
+  while (1)
+  {
+    SerialPrintln(F(""));
+    SerialPrintln(F("Menu: Configure BMP581 Barometric Pressure/Temperature Sensor"));
+
+    SerialPrint(F("1) Sensor Logging: "));
+    if (sensorSetting->log == true) SerialPrintln(F("Enabled"));
+    else SerialPrintln(F("Disabled"));
+
+    if (sensorSetting->log == true)
+    {
+      SerialPrint(F("2) Log Pressure: "));
+      if (sensorSetting->logPressure == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("3) Log Temperature: "));
+      if (sensorSetting->logTemperature == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+    }
+    SerialPrintln(F("x) Exit"));
+
+    byte incoming = getByteChoice(menuTimeout); //Timeout after x seconds
+
+    if (incoming == '1')
+      sensorSetting->log ^= 1;
+    else if (sensorSetting->log == true)
+    {
+      if (incoming == '2')
+        sensorSetting->logPressure ^= 1;
+      else if (incoming == '3')
+        sensorSetting->logTemperature ^= 1;
+      else if (incoming == 'x')
+        break;
+      else if (incoming == STATUS_GETBYTE_TIMEOUT)
+        break;
+      else
+        printUnknown(incoming);
+    }
+    else if (incoming == 'x')
+      break;
+    else if (incoming == STATUS_GETBYTE_TIMEOUT)
+      break;
+    else
+      printUnknown(incoming);
+  }
+}
+

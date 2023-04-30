@@ -1278,6 +1278,34 @@ void gatherDeviceValues(char * sdOutputData, size_t lenData)
             }
           }
           break;
+        case DEVICE_BMP581:
+          {
+            BMP581 *nodeDevice = (BMP581 *)temp->classPtr;
+            struct_BMP581 *nodeSetting = (struct_BMP581 *)temp->configPtr;
+            if (nodeSetting->log == true)
+            {
+              bmp5_sensor_data data = {0,0};
+
+              if ((nodeSetting->logPressure) || (nodeSetting->logTemperature))
+              {
+                // Each triggered measurement takes 45ms to complete so we need to use continuous measurements
+                nodeDevice->getSensorData(&data); // Read the latest measurement
+              }
+              if (nodeSetting->logPressure)
+              {
+                olaftoa(data.pressure, tempData1, 2, sizeof(tempData) / sizeof(char));
+                sprintf(tempData, "%s,", tempData1);
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logTemperature)
+              {
+                olaftoa(data.temperature, tempData1, 2, sizeof(tempData) / sizeof(char));
+                sprintf(tempData, "%s,", tempData1);
+                strlcat(sdOutputData, tempData, lenData);
+              }
+            }
+          }
+          break;
         default:
           SerialPrintf2("printDeviceValue unknown device type: %s\r\n", getDeviceName(temp->deviceType));
           break;
@@ -1792,6 +1820,19 @@ static void getHelperText(char* helperText, size_t lenText)
             }
           }
           break;
+        case DEVICE_BMP581:
+          {
+            BMP581 *nodeDevice = (BMP581 *)temp->classPtr;
+            struct_BMP581 *nodeSetting = (struct_BMP581 *)temp->configPtr;
+            if (nodeSetting->log)
+            {
+              if (nodeSetting->logPressure)
+                strlcat(helperText, "pressure_Pa,", lenText);
+              if (nodeSetting->logTemperature)
+                strlcat(helperText, "temp_degC,", lenText);
+            }          }
+          break;
+
         default:
           SerialPrintf2("\nprinterHelperText device not found: %d\r\n", temp->deviceType);
           break;
