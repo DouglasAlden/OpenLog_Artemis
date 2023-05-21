@@ -140,6 +140,9 @@ struct struct_ublox {
   uint32_t i2cSpeed = 100000; //Default to 100kHz for least number of CRC issues
   unsigned long powerOnDelayMillis = 30000; // Wait for at least this many millis before communicating with this device
   bool useAutoPVT = false; // Use autoPVT - to allow data collection at rates faster than GPS
+  int sampleInt = 5; // GPS will be sampled once every sampleInt of environmental sensors, for example if 
+                     // environmental sensors are sample every 2 minutes then the GPS will be sampled once
+                     // every 10 minutes.
 };
 
 #define VL53L1X_DISTANCE_MODE_SHORT 0

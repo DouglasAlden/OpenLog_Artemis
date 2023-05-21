@@ -1044,7 +1044,9 @@ void menuConfigure_ublox(void *configPtr)
       if (sensorSetting->useAutoPVT == true) SerialPrintln(F("Yes"));
       else SerialPrintln(F("No"));
 
-      SerialPrintln(F("16) Reset GNSS to factory defaults"));
+      SerialPrint(F("16) Set number of environmental samples to collect before getting new GPS: %d\r\n", sensorSetting->environmentalSamplesCnt);
+
+      SerialPrintln(F("17) Reset GNSS to factory defaults"));
 
       SerialFlush();
     }
@@ -1092,6 +1094,15 @@ void menuConfigure_ublox(void *configPtr)
       else if (incoming == 15)
         sensorSetting->useAutoPVT ^= 1;
       else if (incoming == 16)
+      {
+        SerialPrint(F("Enter GPS sample interval (1 to 10): "));
+        int amt = getNumber(menuTimeout); //x second timeout
+        if (amt < 1 || amt > 10)
+          SerialPrintln(F("Error: Out of range"));
+        else
+          sensorSetting->environmentalSamplesCnt = amt;
+      }
+      else if (incoming == 17)
       {
         SerialPrintln(F("Reset GNSS module to factory defaults. This will take 5 seconds to complete."));
         SerialPrintln(F("Are you sure? Press 'y' to confirm: "));

@@ -322,6 +322,7 @@ bool addDevice(deviceType_e deviceType, uint8_t address, uint8_t muxAddress, uin
 //Begin()'s all devices in the node list
 bool beginQwiicDevices()
 {
+  static int environmentalSamplesCnt = 1; // used to sample environmental sensors more frequently than GPS
   bool everythingStarted = true;
 
   waitForQwiicBusPowerDelay(); // Wait while the qwiic devices power up - if required
@@ -382,7 +383,13 @@ bool beginQwiicDevices()
           setQwiicPullups(0); //Disable pullups for u-blox comms.
           SFE_UBLOX_GNSS *tempDevice = (SFE_UBLOX_GNSS *)temp->classPtr;
           struct_ublox *nodeSetting = (struct_ublox *)temp->configPtr; //Create a local pointer that points to same spot as node does
-          if (nodeSetting->powerOnDelayMillis > qwiicPowerOnDelayMillis) qwiicPowerOnDelayMillis = nodeSetting->powerOnDelayMillis; // Increase qwiicPowerOnDelayMillis if required
+          if (environmentalSamplesCnt >= nodeSetting->sampleInt)
+          {  // only extend the GPS powerOnDelayMillis to a higher value when we have reached the sample interval
+            if (nodeSetting->powerOnDelayMillis > qwiicPowerOnDelayMillis) qwiicPowerOnDelayMillis = nodeSetting->powerOnDelayMillis; // Increase qwiicPowerOnDelayMillis if required
+            environmentalSamplesCnt = 1;
+          }
+          else
+            { environmentalSamplesCnt++; }
           if(settings.printGNSSDebugMessages == true) tempDevice->enableDebugging(); // Enable debug messages if required
           temp->online = tempDevice->begin(qwiic, temp->address); //Wire port, Address
           setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups.
