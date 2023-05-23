@@ -1044,7 +1044,7 @@ void menuConfigure_ublox(void *configPtr)
       if (sensorSetting->useAutoPVT == true) SerialPrintln(F("Yes"));
       else SerialPrintln(F("No"));
 
-      SerialPrint(F("16) Set number of environmental samples to collect before getting new GPS: %d\r\n", sensorSetting->environmentalSamplesCnt);
+      SerialPrintf2("16) Set number of environmental samples to collect before getting new GPS: %d\r\n", sensorSetting->environmentalSamplesCnt);
 
       SerialPrintln(F("17) Reset GNSS to factory defaults"));
 

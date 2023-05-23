@@ -388,8 +388,11 @@ bool beginQwiicDevices()
             if (nodeSetting->powerOnDelayMillis > qwiicPowerOnDelayMillis) qwiicPowerOnDelayMillis = nodeSetting->powerOnDelayMillis; // Increase qwiicPowerOnDelayMillis if required
             environmentalSamplesCnt = 1;
           }
-          else
-            { environmentalSamplesCnt++; }
+          else  // we are only sampling environmental sensors so keep GPS enable time short
+          {
+            if (nodeSetting->powerOnDelayMillis > qwiicPowerOnDelayMillis) qwiicPowerOnDelayMillis = nodeSetting->powerOnDelayMillisShort; // Increase qwiicPowerOnDelayMillis if required
+            environmentalSamplesCnt++;
+          }
           if(settings.printGNSSDebugMessages == true) tempDevice->enableDebugging(); // Enable debug messages if required
           temp->online = tempDevice->begin(qwiic, temp->address); //Wire port, Address
           setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups.
