@@ -297,6 +297,13 @@ bool addDevice(deviceType_e deviceType, uint8_t address, uint8_t muxAddress, uin
         temp->configPtr = new struct_BMP581;
       }
       break;
+    /*case DEVICE_GPS_XA1110:
+      {
+        temp->classPtr = new SFE_XA1110_GNSS;
+        temp->configPtr = new struct_xa1110;
+      }
+      break;
+    */
     default:
       SerialPrintf2("addDevice Device type not found: %d\r\n", deviceType);
       break;
@@ -632,6 +639,27 @@ bool beginQwiicDevices()
             temp->online = true;
         }
         break;
+      /*case DEVICE_GPS_XA1110:
+        {
+          setQwiicPullups(0); //Disable pullups for u-blox comms.
+          SFE_XA1110_GNSS *tempDevice = (SFE_XA1110_GNSS *)temp->classPtr;
+          struct_xa1110 *nodeSetting = (struct_xa1110 *)temp->configPtr; //Create a local pointer that points to same spot as node does
+          if (environmentalSamplesCnt >= nodeSetting->sampleInt)
+          {  // only extend the GPS powerOnDelayMillis to a higher value when we have reached the sample interval
+            if (nodeSetting->powerOnDelayMillis > qwiicPowerOnDelayMillis) qwiicPowerOnDelayMillis = nodeSetting->powerOnDelayMillis; // Increase qwiicPowerOnDelayMillis if required
+            environmentalSamplesCnt = 1;
+          }
+          else  // we are only sampling environmental sensors so keep GPS enable time short
+          {
+            if (nodeSetting->powerOnDelayMillis > qwiicPowerOnDelayMillis) qwiicPowerOnDelayMillis = nodeSetting->powerOnDelayMillisShort; // Increase qwiicPowerOnDelayMillis if required
+            environmentalSamplesCnt++;
+          }
+          if(settings.printGNSSDebugMessages == true) tempDevice->enableDebugging(); // Enable debug messages if required
+          temp->online = tempDevice->begin(qwiic, temp->address); //Wire port, Address
+          setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups.
+        }
+        break;
+      */
       default:
         SerialPrintf2("beginQwiicDevices: device type not found: %d\r\n", temp->deviceType);
         break;
@@ -1009,7 +1037,33 @@ void configureDevice(node * temp)
     case DEVICE_BMP581:
       //Nothing to configure
       break;
-      
+    /*case DEVICE_GPS_XA1110:
+      {
+        setQwiicPullups(0); //Disable pullups for u-blox comms.
+
+        SFE_XA1110_GNSS *sensor = (SFE_XA1110_GNSS *)temp->classPtr;
+        struct_xa1110 *nodeSetting = (struct_xa1110 *)temp->configPtr;
+
+        sensor->setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
+
+        sensor->saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the current ioPortsettings to flash and BBR
+
+        sensor->setAutoPVT(nodeSetting->useAutoPVT); // Use autoPVT as required
+
+        if (1000000ULL / settings.usBetweenReadings <= 1) //If we are slower than 1Hz logging rate
+          // setNavigationFrequency expects a uint8_t to define the number of updates per second
+          // So the slowest rate we can set with setNavigationFrequency is 1Hz
+          // (Whereas UBX_CFG_RATE can actually support intervals as slow as 65535ms)
+          sensor->setNavigationFrequency(1); //Set output rate to 1Hz
+        else if (1000000ULL / settings.usBetweenReadings <= 10) //If we are slower than 10Hz logging rate
+          sensor->setNavigationFrequency((uint8_t)(1000000ULL / settings.usBetweenReadings)); //Set output rate equal to our query rate
+        else
+          sensor->setNavigationFrequency(10); //Set nav freq to 10Hz. Max output depends on the module used.
+
+        setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups.
+      }
+      break;
+      */  
     default:
       SerialPrintf3("configureDevice: Unknown device type %d: %s\r\n", deviceType, getDeviceName((deviceType_e)deviceType));
       break;
@@ -1134,6 +1188,10 @@ FunctionPointer getConfigFunctionPtr(uint8_t nodeNumber)
     case DEVICE_BMP581:
       ptr = (FunctionPointer)menuConfigure_BMP581;
       break;
+    /*case DEVICE_GPS_XA1110:
+      ptr = (FunctionPointer)menuConfigure_XA1110;
+      break;
+    */
     default:
       SerialPrintln(F("getConfigFunctionPtr: Unknown device type"));
       SerialFlush();
@@ -1262,6 +1320,7 @@ void swap(struct node * a, struct node * b)
 // Available Qwiic devices
 //We no longer use defines in the search table. These are just here for reference.
 #define ADR_VEML6075 0x10
+#define ADR_XA1110 0x10
 #define ADR_MPR0025PA1 0x18
 #define ADR_KX134 0x1E //Alternate: 0x1F
 #define ADR_SDP3X 0x21 //Alternates: 0x22, 0x23
@@ -1305,6 +1364,18 @@ deviceType_e testDevice(uint8_t i2cAddress, uint8_t muxAddress, uint8_t portNumb
         VEML6075 sensor;
         if (sensor.begin(qwiic) == true) //Wire port
           return (DEVICE_UV_VEML6075);
+        
+        //Confidence: High - Sends/receives CRC checked data response
+        /*setQwiicPullups(0); //Disable pullups to minimize CRC issues
+        SFE_XA1110_GNSS sensor;
+        if(settings.printGNSSDebugMessages == true) sensor.enableDebugging(); // Enable debug messages if required
+        if (sensor.begin(qwiic, i2cAddress) == true) //Wire port, address
+        {
+          setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups to prevent ghosts at 0x43 onwards
+          return (DEVICE_GPS_XA1110);
+        }
+        setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups for normal discovery
+        */
       }
       break;
     case 0x18:
@@ -1910,7 +1981,10 @@ const char* getDeviceName(deviceType_e deviceNumber)
     case DEVICE_BMP581:
       return "Pressure-BMP581";
       break;
-
+    /*case DEVICE_GPS_XA1110:
+      return "GPS-XA1110";
+      break;
+    */
     case DEVICE_UNKNOWN_DEVICE:
       return "Unknown device";
       break;

@@ -842,6 +842,27 @@ void recordDeviceSettingsToFile()
             settingsFile.println((String)base + "gain16=" + nodeSetting->gain16);
           }
           break;
+        /*case DEVICE_GPS_XA1110:
+          {
+            struct_xa1110 *nodeSetting = (struct_xa1110 *)temp->configPtr;
+            settingsFile.println((String)base + "log=" + nodeSetting->log);
+            settingsFile.println((String)base + "logDate=" + nodeSetting->logDate);
+            settingsFile.println((String)base + "logTime=" + nodeSetting->logTime);
+            settingsFile.println((String)base + "logPosition=" + nodeSetting->logPosition);
+            settingsFile.println((String)base + "logAltitude=" + nodeSetting->logAltitude);
+            settingsFile.println((String)base + "logAltitudeMSL=" + nodeSetting->logAltitudeMSL);
+            settingsFile.println((String)base + "logSIV=" + nodeSetting->logSIV);
+            settingsFile.println((String)base + "logFixType=" + nodeSetting->logFixType);
+            settingsFile.println((String)base + "logCarrierSolution=" + nodeSetting->logCarrierSolution);
+            settingsFile.println((String)base + "logGroundSpeed=" + nodeSetting->logGroundSpeed);
+            settingsFile.println((String)base + "logHeadingOfMotion=" + nodeSetting->logHeadingOfMotion);
+            settingsFile.println((String)base + "logpDOP=" + nodeSetting->logpDOP);
+            settingsFile.println((String)base + "logiTOW=" + nodeSetting->logiTOW);
+            settingsFile.println((String)base + "i2cSpeed=" + nodeSetting->i2cSpeed);
+            settingsFile.println((String)base + "useAutoPVT=" + nodeSetting->useAutoPVT);
+          }
+          break;
+        */
         default:
           SerialPrintf2("recordSettingsToFile Unknown device: %s\r\n", base);
           //settingsFile.println((String)base + "=UnknownDeviceSettings");
@@ -1571,6 +1592,46 @@ bool parseDeviceLine(char* str) {
             SerialPrintf2("Unknown device setting: %s\r\n", deviceSettingName);
         }
         break;
+      /*case DEVICE_GPS_XA1110:
+        {
+          struct_xa1110 *nodeSetting = (struct_xa1110 *)deviceConfigPtr;
+
+          //Apply the appropriate settings
+          if (strcmp(deviceSettingName, "log") == 0)
+            nodeSetting->log = d;
+          else if (strcmp(deviceSettingName, "logDate") == 0)
+            nodeSetting->logDate = d;
+          else if (strcmp(deviceSettingName, "logTime") == 0)
+            nodeSetting->logTime = d;
+          else if (strcmp(deviceSettingName, "logPosition") == 0)
+            nodeSetting->logPosition = d;
+          else if (strcmp(deviceSettingName, "logAltitude") == 0)
+            nodeSetting->logAltitude = d;
+          else if (strcmp(deviceSettingName, "logAltitudeMSL") == 0)
+            nodeSetting->logAltitudeMSL = d;
+          else if (strcmp(deviceSettingName, "logSIV") == 0)
+            nodeSetting->logSIV = d;
+          else if (strcmp(deviceSettingName, "logFixType") == 0)
+            nodeSetting->logFixType = d;
+          else if (strcmp(deviceSettingName, "logCarrierSolution") == 0)
+            nodeSetting->logCarrierSolution = d;
+          else if (strcmp(deviceSettingName, "logGroundSpeed") == 0)
+            nodeSetting->logGroundSpeed = d;
+          else if (strcmp(deviceSettingName, "logHeadingOfMotion") == 0)
+            nodeSetting->logHeadingOfMotion = d;
+          else if (strcmp(deviceSettingName, "logpDOP") == 0)
+            nodeSetting->logpDOP = d;
+          else if (strcmp(deviceSettingName, "logiTOW") == 0)
+            nodeSetting->logiTOW = d;
+          else if (strcmp(deviceSettingName, "i2cSpeed") == 0)
+            nodeSetting->i2cSpeed = d;
+          else if (strcmp(deviceSettingName, "useAutoPVT") == 0)
+            nodeSetting->useAutoPVT = d;
+          else
+            SerialPrintf2("Unknown device setting: %s\r\n", deviceSettingName);
+        }
+        break;
+*/
       default:
         SerialPrintf2("Unknown device type: %d\r\n", deviceType);
         SerialFlush();

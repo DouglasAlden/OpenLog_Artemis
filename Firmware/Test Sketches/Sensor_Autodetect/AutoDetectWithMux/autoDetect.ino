@@ -442,7 +442,13 @@ const char* getDeviceName(deviceType_e deviceNumber)
     case DEVICE_IMU_ICM20948:
       return "IMU-ICM20948";
       break;
-
+    case DEVICE_BMP581:
+      return "Pressure-BME581";
+      break;  
+    /*case DEVICE_GPS_XA1110:
+      return "GPS-XA1110";
+      break;
+    */
     case DEVICE_UNKNOWN_DEVICE:
       return "Unknown device";
       break;

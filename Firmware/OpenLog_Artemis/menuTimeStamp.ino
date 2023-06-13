@@ -98,7 +98,8 @@ void menuTimeStamp()
 
     if (settings.logDate == true || settings.logTime == true)
     {
-      if (isUbloxAttached() == true)
+    /*  if ((isUbloxAttached() == true) || (isXA1110Attached() == true)) */
+      if ((isUbloxAttached() == true))
       {
         SerialPrintln(F("8) Synchronize RTC to GPS"));
       }
@@ -135,7 +136,8 @@ void menuTimeStamp()
         myRTC.setToCompilerTime(); //Set RTC using the system __DATE__ and __TIME__ macros from compiler
         SerialPrintln(F("RTC set to compiler time"));
       }
-      else if ((incoming == 8) && (isUbloxAttached() == true))
+      /*else if ((incoming == 8) && ((isUbloxAttached() == true) || (isXA1110Attached() == true)))*/
+      else if ((incoming == 8) && ((isUbloxAttached() == true)))
       {
         myRTC.getTime(); // Get the RTC date and time (just in case getGPSDateTime fails)
         int dd = myRTC.dayOfMonth, mm = myRTC.month, yy = myRTC.year, h = myRTC.hour, m = myRTC.minute, s = myRTC.seconds, ms = (myRTC.hundredths * 10);

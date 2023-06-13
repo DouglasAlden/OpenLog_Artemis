@@ -1306,6 +1306,138 @@ void gatherDeviceValues(char * sdOutputData, size_t lenData)
             }
           }
           break;
+        /*case DEVICE_GPS_XA1110:
+          {
+            setQwiicPullups(0); //Disable pullups to minimize CRC issues
+
+            SFE_XA1110_GNSS *nodeDevice = (SFE_XA1110_GNSS *)temp->classPtr;
+            struct_xa1110 *nodeSetting = (struct_xa1110 *)temp->configPtr;
+
+            if (nodeSetting->log == true)
+            {
+              if (nodeSetting->logDate)
+              {
+                char gnssDayStr[3];
+                char gnssMonthStr[3];
+                char gnssYearStr[5];
+                int gnssDay = nodeDevice->getDay();
+                int gnssMonth = nodeDevice->getMonth();
+                int gnssYear = nodeDevice->getYear();
+                if (gnssDay < 10)
+                  sprintf(gnssDayStr, "0%d", gnssDay);
+                else
+                  sprintf(gnssDayStr, "%d", gnssDay);
+                if (gnssMonth < 10)
+                  sprintf(gnssMonthStr, "0%d", gnssMonth);
+                else
+                  sprintf(gnssMonthStr, "%d", gnssMonth);
+                sprintf(gnssYearStr, "%d", gnssYear);
+                if (settings.dateStyle == 0)
+                {
+                  sprintf(tempData, "%s/%s/%s,", gnssMonthStr, gnssDayStr, gnssYearStr);
+                }
+                else if (settings.dateStyle == 1)
+                {
+                  sprintf(tempData, "%s/%s/%s,", gnssDayStr, gnssMonthStr, gnssYearStr);
+                }
+                else // if (settings.dateStyle == 2)
+                {
+                  sprintf(tempData, "%s/%s/%s,", gnssYearStr, gnssMonthStr, gnssDayStr);
+                }
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logTime)
+              {
+                int adjustedHour = nodeDevice->getHour();
+                if (settings.hour24Style == false)
+                  if (adjustedHour > 12) adjustedHour -= 12;
+
+                char gnssHourStr[3];
+                char gnssMinStr[3];
+                char gnssSecStr[3];
+                char gnssMillisStr[4];
+                int gnssMin = nodeDevice->getMinute();
+                int gnssSec = nodeDevice->getSecond();
+                int gnssMillis = nodeDevice->getMillisecond();
+
+                if (adjustedHour < 10)
+                  sprintf(gnssHourStr, "0%d", adjustedHour);
+                else
+                  sprintf(gnssHourStr, "%d", adjustedHour);
+                if (gnssMin < 10)
+                  sprintf(gnssMinStr, "0%d", gnssMin);
+                else
+                  sprintf(gnssMinStr, "%d", gnssMin);
+                if (gnssSec < 10)
+                  sprintf(gnssSecStr, "0%d", gnssSec);
+                else
+                  sprintf(gnssSecStr, "%d", gnssSec);
+                if (gnssMillis < 10)
+                  sprintf(gnssMillisStr, "00%d", gnssMillis);
+                else if (gnssMillis < 100)
+                  sprintf(gnssMillisStr, "0%d", gnssMillis);
+                else
+                  sprintf(gnssMillisStr, "%d", gnssMillis);
+
+                sprintf(tempData, "%s:%s:%s.%s,", gnssHourStr, gnssMinStr, gnssSecStr, gnssMillisStr);
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logPosition)
+              {
+                sprintf(tempData, "%d,%d,", nodeDevice->getLatitude(), nodeDevice->getLongitude());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logAltitude)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getAltitude());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logAltitudeMSL)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getAltitudeMSL());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logSIV)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getSIV());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logFixType)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getFixType());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logCarrierSolution)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getCarrierSolutionType());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logGroundSpeed)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getGroundSpeed());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logHeadingOfMotion)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getHeading());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logpDOP)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getPDOP());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->logiTOW)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getTimeOfWeek());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+            }
+
+            setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups
+          }
+          break;
+        */
         default:
           SerialPrintf2("printDeviceValue unknown device type: %s\r\n", getDeviceName(temp->deviceType));
           break;
@@ -1832,7 +1964,39 @@ static void getHelperText(char* helperText, size_t lenText)
                 strlcat(helperText, "temp_degC,", lenText);
             }          }
           break;
-
+        /*case DEVICE_GPS_XA1110:
+          {
+            struct_xa1110 *nodeSetting = (struct_xa1110 *)temp->configPtr;
+            if (nodeSetting->log)
+            {
+              if (nodeSetting->logDate)
+                strlcat(helperText, "gps_Date,", lenText);
+              if (nodeSetting->logTime)
+                strlcat(helperText, "gps_Time,", lenText);
+              if (nodeSetting->logPosition)
+                strlcat(helperText, "gps_Lat,gps_Long,", lenText);
+              if (nodeSetting->logAltitude)
+                strlcat(helperText, "gps_Alt,", lenText);
+              if (nodeSetting->logAltitudeMSL)
+                strlcat(helperText, "gps_AltMSL,", lenText);
+              if (nodeSetting->logSIV)
+                strlcat(helperText, "gps_SIV,", lenText);
+              if (nodeSetting->logFixType)
+                strlcat(helperText, "gps_FixType,", lenText);
+              if (nodeSetting->logCarrierSolution)
+                strlcat(helperText, "gps_CarrierSolution,", lenText);
+              if (nodeSetting->logGroundSpeed)
+                strlcat(helperText, "gps_GroundSpeed,", lenText);
+              if (nodeSetting->logHeadingOfMotion)
+                strlcat(helperText, "gps_Heading,", lenText);
+              if (nodeSetting->logpDOP)
+                strlcat(helperText, "gps_pDOP,", lenText);
+              if (nodeSetting->logiTOW)
+                strlcat(helperText, "gps_iTOW,", lenText);
+            }
+          }
+          break;
+*/
         default:
           SerialPrintf2("\nprinterHelperText device not found: %d\r\n", temp->deviceType);
           break;

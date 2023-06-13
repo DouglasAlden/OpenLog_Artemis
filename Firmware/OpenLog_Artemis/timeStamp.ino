@@ -146,6 +146,7 @@ void getTimeString(char timeStringBuffer[])
 void getGPSDateTime(int &year, int &month, int &day, int &hour, int &minute, int &second, int &millisecond, bool &dateValid, bool &timeValid) {
   //Get latested date/time from GPS
   //These will be extracted from a single PVT packet
+  
   getUbloxDateTime(year, month, day, hour, minute, second, millisecond, dateValid, timeValid);
   //Do it twice - to make sure the data is fresh
   getUbloxDateTime(year, month, day, hour, minute, second, millisecond, dateValid, timeValid);

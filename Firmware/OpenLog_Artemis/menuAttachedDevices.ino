@@ -371,6 +371,10 @@ void menuAttachedDevices()
           case DEVICE_BMP581:
             SerialPrintf3("%s BMP581 Barometric Pressure/Temp Sensor %s\r\n", strDeviceMenu, strAddress);
             break;
+          /*case DEVICE_GPS_XA1110:
+            SerialPrintf3("%s XA1110 GPS Receiver %s\r\n", strDeviceMenu, strAddress);
+            break;
+          */
           default:
             SerialPrintf2("Unknown device type %d in menuAttachedDevices\r\n", temp->deviceType);
             break;
@@ -1044,9 +1048,21 @@ void menuConfigure_ublox(void *configPtr)
       if (sensorSetting->useAutoPVT == true) SerialPrintln(F("Yes"));
       else SerialPrintln(F("No"));
 
-      SerialPrintf2("16) Set number of environmental samples to collect before getting new GPS: %d\r\n", sensorSetting->environmentalSamplesCnt);
+      SerialPrintf2("16) Set number of environmental samples to collect before getting new GPS: %d\r\n", sensorSetting->sampleInt);
 
       SerialPrintln(F("17) Reset GNSS to factory defaults"));
+
+      SerialPrint(F("18) Enable GPS constellation: "));
+      if (sensorSetting->enableGPS == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("19) Log GLONASS constellation: "));
+      if (sensorSetting->enableGLO == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("20) Log Galileo constellation: "));
+      if (sensorSetting->enableGAL == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
 
       SerialFlush();
     }
@@ -1100,7 +1116,7 @@ void menuConfigure_ublox(void *configPtr)
         if (amt < 1 || amt > 10)
           SerialPrintln(F("Error: Out of range"));
         else
-          sensorSetting->environmentalSamplesCnt = amt;
+          sensorSetting->sampleInt = amt;
       }
       else if (incoming == 17)
       {
@@ -1114,6 +1130,12 @@ void menuConfigure_ublox(void *configPtr)
         else
           SerialPrintln(F("Reset GNSS aborted"));
       } 
+      else if (incoming == 18)
+        sensorSetting->enableGPS ^= 1;
+      else if (incoming == 19)
+        sensorSetting->enableGLO ^= 1;
+      else if (incoming == 20)
+        sensorSetting->enableGAL ^= 1;
       else if (incoming == STATUS_PRESSED_X)
         break;
       else if (incoming == STATUS_GETNUMBER_TIMEOUT)
@@ -1185,6 +1207,30 @@ void getUbloxDateTime(int &year, int &month, int &day, int &hour, int &minute, i
     temp = temp->next;
   }
 }
+
+/*boolean enableConstellations(uint16_t maxWait)
+{
+  boolean success = true;
+  
+  success &= gpsSensor_ublox.enableGNSS(settings.sensor_uBlox.enableGPS, SFE_UBLOX_GNSS_ID_GPS, VAL_LAYER_RAM_BBR, maxWait);
+  success &= gpsSensor_ublox.enableGNSS(settings.sensor_uBlox.enableGLO, SFE_UBLOX_GNSS_ID_GLONASS, VAL_LAYER_RAM_BBR, maxWait);
+  success &= gpsSensor_ublox.enableGNSS(settings.sensor_uBlox.enableGAL, SFE_UBLOX_GNSS_ID_GALILEO, VAL_LAYER_RAM_BBR, maxWait);
+  success &= gpsSensor_ublox.enableGNSS(settings.sensor_uBlox.enableBDS, SFE_UBLOX_GNSS_ID_BEIDOU, VAL_LAYER_RAM_BBR, maxWait);
+  success &= gpsSensor_ublox.enableGNSS(settings.sensor_uBlox.enableQZSS, SFE_UBLOX_GNSS_ID_QZSS, VAL_LAYER_RAM_BBR, maxWait);
+  
+  if (settings.printMinorDebugMessages)
+  {
+    if (success)
+    {
+      Serial.println(F("enableConstellations: successful"));
+    }
+    else
+    {
+      Serial.println(F("enableConstellations: failed!"));
+    }
+  }
+  return (success);
+}*/
 
 void gnssFactoryDefault(void)
 {
@@ -3249,3 +3295,246 @@ void menuConfigure_BMP581(void *configPtr)
   }
 }
 
+/*void menuConfigure_XA1110(void *configPtr)
+{
+  struct_xa1110 *sensorSetting = (struct_xa1110*)configPtr;
+
+  while (1)
+  {
+    SerialPrintln(F(""));
+    SerialPrintln(F("Menu: Configure XA1110 GPS Receiver"));
+
+    SerialPrint(F("1) Sensor Logging: "));
+    if (sensorSetting->log == true) SerialPrintln(F("Enabled"));
+    else SerialPrintln(F("Disabled"));
+
+    if (sensorSetting->log == true)
+    {
+      SerialPrint(F("2) Log GPS Date: "));
+      if (sensorSetting->logDate == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("3) Log GPS Time: "));
+      if (sensorSetting->logTime == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("4) Log Longitude/Latitude: "));
+      if (sensorSetting->logPosition == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("5) Log Altitude: "));
+      if (sensorSetting->logAltitude == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("6) Log Altitude Mean Sea Level: "));
+      if (sensorSetting->logAltitudeMSL == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("7) Log Satellites In View: "));
+      if (sensorSetting->logSIV == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("8) Log Fix Type: "));
+      if (sensorSetting->logFixType == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("9) Log Carrier Solution: "));
+      if (sensorSetting->logCarrierSolution == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("10) Log Ground Speed: "));
+      if (sensorSetting->logGroundSpeed == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("11) Log Heading of Motion: "));
+      if (sensorSetting->logHeadingOfMotion == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("12) Log Position Dilution of Precision (pDOP): "));
+      if (sensorSetting->logpDOP == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("13) Log Interval Time Of Week (iTOW): "));
+      if (sensorSetting->logiTOW == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrintf2("14) Set I2C Interface Speed (u-blox modules have pullups built in. Remove *all* I2C pullups to achieve 400kHz): %d\r\n", sensorSetting->i2cSpeed);
+
+      SerialPrint(F("15) Use autoPVT: "));
+      if (sensorSetting->useAutoPVT == true) SerialPrintln(F("Yes"));
+      else SerialPrintln(F("No"));
+
+      SerialPrintf2("16) Set number of environmental samples to collect before getting new GPS: %d\r\n", sensorSetting->sampleInt);
+
+      SerialPrintln(F("17) Reset GNSS to factory defaults"));
+
+      SerialFlush();
+    }
+    SerialPrintln(F("x) Exit"));
+
+    int incoming = getNumber(menuTimeout); //Timeout after 10 seconds
+
+    if (incoming == 1)
+    {
+      sensorSetting->log ^= 1;
+    }
+    else if (sensorSetting->log == true)
+    {
+      if (incoming == 2)
+        sensorSetting->logDate ^= 1;
+      else if (incoming == 3)
+        sensorSetting->logTime ^= 1;
+      else if (incoming == 4)
+        sensorSetting->logPosition ^= 1;
+      else if (incoming == 5)
+        sensorSetting->logAltitude ^= 1;
+      else if (incoming == 6)
+        sensorSetting->logAltitudeMSL ^= 1;
+      else if (incoming == 7)
+        sensorSetting->logSIV ^= 1;
+      else if (incoming == 8)
+        sensorSetting->logFixType ^= 1;
+      else if (incoming == 9)
+        sensorSetting->logCarrierSolution ^= 1;
+      else if (incoming == 10)
+        sensorSetting->logGroundSpeed ^= 1;
+      else if (incoming == 11)
+        sensorSetting->logHeadingOfMotion ^= 1;
+      else if (incoming == 12)
+        sensorSetting->logpDOP ^= 1;
+      else if (incoming == 13)
+        sensorSetting->logiTOW ^= 1;
+      else if (incoming == 14)
+      {
+        if (sensorSetting->i2cSpeed == 100000)
+          sensorSetting->i2cSpeed = 400000;
+        else
+          sensorSetting->i2cSpeed = 100000;
+      }
+      else if (incoming == 15)
+        sensorSetting->useAutoPVT ^= 1;
+      else if (incoming == 16)
+      {
+        SerialPrint(F("Enter GPS sample interval (1 to 10): "));
+        int amt = getNumber(menuTimeout); //x second timeout
+        if (amt < 1 || amt > 10)
+          SerialPrintln(F("Error: Out of range"));
+        else
+          sensorSetting->sampleInt = amt;
+      }
+      else if (incoming == 17)
+      {
+        SerialPrintln(F("Reset GNSS module to factory defaults. This will take 5 seconds to complete."));
+        SerialPrintln(F("Are you sure? Press 'y' to confirm: "));
+        byte bContinue = getByteChoice(menuTimeout);
+        if (bContinue == 'y')
+        {
+          xa1110FactoryDefault();
+        }
+        else
+          SerialPrintln(F("Reset GNSS aborted"));
+      } 
+      else if (incoming == STATUS_PRESSED_X)
+        break;
+      else if (incoming == STATUS_GETNUMBER_TIMEOUT)
+        break;
+      else
+        printUnknown(incoming);
+    }
+    else if (incoming == STATUS_PRESSED_X)
+      break;
+    else if (incoming == STATUS_GETNUMBER_TIMEOUT)
+      break;
+    else
+      printUnknown(incoming);
+  }
+}
+
+bool isXA1110Attached()
+{
+  //Step through node list
+  node *temp = head;
+
+  while (temp != NULL)
+  {
+    switch (temp->deviceType)
+    {
+      case DEVICE_GPS_XA1110:
+        return (true);
+    }
+    temp = temp->next;
+  }
+
+  return (false);
+}
+*/
+
+/*void getXA1110DateTime(int &year, int &month, int &day, int &hour, int &minute, int &second, int &millisecond, bool &dateValid, bool &timeValid)
+{
+  //Step through node list
+  node *temp = head;
+
+  while (temp != NULL)
+  {
+    switch (temp->deviceType)
+    {
+      case DEVICE_GPS_XA1110:
+        {
+          setQwiicPullups(0); //Disable pullups to minimize CRC issues
+
+          SFE_XA1110_GNSS *nodeDevice = (SFE_XA1110_GNSS *)temp->classPtr;
+          struct_xa1110 *nodeSetting = (struct_xa1110 *)temp->configPtr;
+
+          //If autoPVT is enabled, flush the data to make sure we get fresh date and time
+          if (nodeSetting->useAutoPVT) nodeDevice->flushPVT();
+
+          //Get latested date/time from GPS
+          //These will be extracted from a single PVT packet
+          year = nodeDevice->getYear();
+          month = nodeDevice->getMonth();
+          day = nodeDevice->getDay();
+          hour = nodeDevice->getHour();
+          minute = nodeDevice->getMinute();
+          second = nodeDevice->getSecond();
+          dateValid = nodeDevice->getDateValid();
+          timeValid = nodeDevice->getTimeValid();
+          millisecond = nodeDevice->getMillisecond();
+
+          setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups
+        }
+    }
+    temp = temp->next;
+  }
+}
+
+void xa1110FactoryDefault(void)
+{
+  //Step through node list
+  node *temp = head;
+
+  while (temp != NULL)
+  {
+    switch (temp->deviceType)
+    {
+      case DEVICE_GPS_XA1110:
+        {
+          setQwiicPullups(0); //Disable pullups to minimize CRC issues
+
+          SFE_XA1110_GNSS *nodeDevice = (SFE_XA1110_GNSS *)temp->classPtr;
+          struct_xa1110 *nodeSetting = (struct_xa1110 *)temp->configPtr;
+
+          //Reset the module to the factory defaults
+          //nodeDevice->xa1110factoryDefault();
+          
+          delay(5000); //Blocking delay to allow module to reset
+
+          nodeDevice->setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
+          nodeDevice->saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the current ioPortsettings to flash and BBR
+
+          setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups
+        }
+    }
+    temp = temp->next;
+  }
+}
+*/

@@ -33,6 +33,7 @@ typedef enum
   DEVICE_KX134,
   DEVICE_ADS1015,
   DEVICE_BMP581,
+  /*DEVICE_GPS_XA1110,*/
 
   DEVICE_TOTAL_DEVICES, //Marks the end, used to iterate loops
   DEVICE_UNKNOWN_DEVICE,
@@ -122,9 +123,11 @@ struct struct_VCNL4040 {
   unsigned long powerOnDelayMillis = minimumQwiicPowerOnDelay; // Wait for at least this many millis before communicating with this device. Increase if required!
 };
 
-
 struct struct_ublox {
   bool log = true;
+  bool enableGPS = true;  // GPS
+  bool enableGLO = true;  // Glosnas
+  bool enableGAL = true;  // Galileo
   bool logDate = true;
   bool logTime = true;
   bool logPosition = true;
@@ -138,7 +141,7 @@ struct struct_ublox {
   bool logpDOP = true;
   bool logiTOW = false;
   uint32_t i2cSpeed = 100000; //Default to 100kHz for least number of CRC issues
-  unsigned long powerOnDelayMillis = 30000; // Wait for at least this many millis before communicating with this device
+  unsigned long powerOnDelayMillis = 31000; // Wait for at least this many millis before communicating with this device
   unsigned long powerOnDelayMillisShort = 1000; // Minimum wait time for GPS
   bool useAutoPVT = false; // Use autoPVT - to allow data collection at rates faster than GPS
   int sampleInt = 5; // GPS will be sampled once every sampleInt of environmental sensors, for example if 
@@ -475,6 +478,29 @@ struct struct_BMP581 {
   bool logPressure = true;
   bool logTemperature = true;
   unsigned long powerOnDelayMillis = minimumQwiicPowerOnDelay; // Wait for at least this many millis before communicating with this device. Increase if required!
+};
+
+struct struct_xa1110 {
+  bool log = true;
+  bool logDate = true;
+  bool logTime = true;
+  bool logPosition = true;
+  bool logAltitude = true;
+  bool logAltitudeMSL = false;
+  bool logSIV = true;
+  bool logFixType = true;
+  bool logCarrierSolution = false;
+  bool logGroundSpeed = true;
+  bool logHeadingOfMotion = true;
+  bool logpDOP = true;
+  bool logiTOW = false;
+  uint32_t i2cSpeed = 100000; //Default to 100kHz for least number of CRC issues
+  unsigned long powerOnDelayMillis = 20000; // Wait for at least this many millis before communicating with this device
+  unsigned long powerOnDelayMillisShort = 1000; // Minimum wait time for GPS
+  bool useAutoPVT = false; // Use autoPVT - to allow data collection at rates faster than GPS
+  int sampleInt = 5; // GPS will be sampled once every sampleInt of environmental sensors, for example if 
+                     // environmental sensors are sample every 2 minutes then the GPS will be sampled once
+                     // every 10 minutes.
 };
 
 //This is all the settings that can be set on OpenLog. It's recorded to NVM and the config file.
