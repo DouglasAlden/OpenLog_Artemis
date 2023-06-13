@@ -131,14 +131,14 @@ struct struct_ublox {
   bool logDate = true;
   bool logTime = true;
   bool logPosition = true;
-  bool logAltitude = true;
+  bool logAltitude = false;
   bool logAltitudeMSL = false;
   bool logSIV = true;
   bool logFixType = true;
   bool logCarrierSolution = false;
-  bool logGroundSpeed = true;
-  bool logHeadingOfMotion = true;
-  bool logpDOP = true;
+  bool logGroundSpeed = false;
+  bool logHeadingOfMotion = false;
+  bool logpDOP = false;
   bool logiTOW = false;
   uint32_t i2cSpeed = 100000; //Default to 100kHz for least number of CRC issues
   unsigned long powerOnDelayMillis = 31000; // Wait for at least this many millis before communicating with this device
@@ -511,7 +511,7 @@ struct struct_settings {
   int nextDataLogNumber = 1;
   //uint32_t: Largest is 4,294,967,295 or 4,294s or 71 minutes between readings.
   //uint64_t: Largest is 9,223,372,036,854,775,807 or 9,223,372,036,854s or 292,471 years between readings.
-  uint64_t usBetweenReadings = 100000ULL; //Default to 100,000us = 100ms = 10 readings per second.
+  uint64_t usBetweenReadings = 100000000ULL; //Default to 100,000,000us = 1ms = 1 reading per second.
   //100,000 / 1000 = 100ms. 1 / 100ms = 10Hz
   //recordPerSecond (Hz) = 1 / ((usBetweenReadings / 1000UL) / 1000UL)
   //recordPerSecond (Hz) = 1,000,000 / usBetweenReadings
@@ -530,7 +530,7 @@ struct struct_settings {
   bool logRTC = true;
   bool logHertz = true;
   bool correctForDST = false;
-  int dateStyle = 0; // 0 : mm/dd/yyyy, 1 : dd/mm/yyyy, 2 : yyyy/mm/dd, 3 : ISO8601 (date and time)
+  int dateStyle = 2; // 0 : mm/dd/yyyy, 1 : dd/mm/yyyy, 2 : yyyy/mm/dd, 3 : ISO8601 (date and time)
   bool hour24Style = true;
   int  serialTerminalBaudRate = 115200;
   int  serialLogBaudRate = 9600;
@@ -550,7 +550,7 @@ struct struct_settings {
   uint32_t qwiicBusMaxSpeed = 100000; // 400kHz with no pull-ups can cause issues. Default to 100kHz. User can change to 400 if required.
   int  qwiicBusPowerUpDelayMs = 250; // This is the minimum delay between the qwiic bus power being turned on and communication with the qwiic devices being attempted
   bool printMeasurementCount = false;
-  bool enablePwrLedDuringSleep = true;
+  bool enablePwrLedDuringSleep = false;
   bool logVIN = false;
   unsigned long openNewLogFilesAfter = 0; //Default to 0 (Never) seconds
   float vinCorrectionFactor = 1.47; //Correction factor for the VIN measurement; to compensate for the divider impedance
