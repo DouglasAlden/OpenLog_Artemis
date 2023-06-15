@@ -1052,15 +1052,15 @@ void menuConfigure_ublox(void *configPtr)
 
       SerialPrintln(F("17) Reset GNSS to factory defaults"));
 
-      SerialPrint(F("18) Enable GPS constellation: "));
+      SerialPrint(F("18) Use GPS constellation: "));
       if (sensorSetting->enableGPS == true) SerialPrintln(F("Enabled"));
       else SerialPrintln(F("Disabled"));
 
-      SerialPrint(F("19) Log GLONASS constellation: "));
+      SerialPrint(F("19) Use GLONASS constellation: "));
       if (sensorSetting->enableGLO == true) SerialPrintln(F("Enabled"));
       else SerialPrintln(F("Disabled"));
 
-      SerialPrint(F("20) Log Galileo constellation: "));
+      SerialPrint(F("20) Use Galileo constellation: "));
       if (sensorSetting->enableGAL == true) SerialPrintln(F("Enabled"));
       else SerialPrintln(F("Disabled"));
 
