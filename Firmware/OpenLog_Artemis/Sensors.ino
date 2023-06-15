@@ -408,21 +408,6 @@ void gatherDeviceValues(char * sdOutputData, size_t lenData)
                 sprintf(tempData, "%d,", nodeDevice->getTimeOfWeek());
                 strlcat(sdOutputData, tempData, lenData);
               }
-              if (nodeSetting->enableGPS)
-              {
-                sprintf(tempData, "%d,", nodeDevice->getTimeOfWeek());
-                strlcat(sdOutputData, tempData, lenData);
-              }
-              if (nodeSetting->enableGLO)
-              {
-                sprintf(tempData, "%d,", nodeDevice->getTimeOfWeek());
-                strlcat(sdOutputData, tempData, lenData);
-              }
-              if (nodeSetting->enableGAL)
-              {
-                sprintf(tempData, "%d,", nodeDevice->getTimeOfWeek());
-                strlcat(sdOutputData, tempData, lenData);
-              }
             }
 
             setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups
