@@ -401,7 +401,7 @@ bool beginQwiicDevices()
             environmentalSamplesCnt++;
           }
           
-          enableConstellations(2100);  // Enable GPS, Glonass, and Galileo
+          //enableConstellations(2100);  // Enable GPS, Glonass, and Galileo
 
           if(settings.printGNSSDebugMessages == true) tempDevice->enableDebugging(); // Enable debug messages if required
           temp->online = tempDevice->begin(qwiic, temp->address); //Wire port, Address
