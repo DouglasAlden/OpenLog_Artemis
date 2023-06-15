@@ -1228,8 +1228,8 @@ boolean enableConstellations(uint16_t maxWait)
 
           
           success &= nodeDevice->enableGNSS(nodeSetting->enableGPS, SFE_UBLOX_GNSS_ID_GPS, maxWait);
-          success &= nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GPS, maxWait);
-          success &= nodeDevice->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GPS, maxWait);
+          success &= nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GLONASS, maxWait);
+          success &= nodeDevice->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GALILEO, maxWait);
 
           /*success &= nodeDevice->enableGNSS(nodeSetting->enableGPS, SFE_UBLOX_GNSS_ID_GPS, VAL_LAYER_BBR, maxWait);
           success &= nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GPS, VAL_LAYER_BBR, maxWait);
