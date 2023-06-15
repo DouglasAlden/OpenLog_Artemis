@@ -408,6 +408,21 @@ void gatherDeviceValues(char * sdOutputData, size_t lenData)
                 sprintf(tempData, "%d,", nodeDevice->getTimeOfWeek());
                 strlcat(sdOutputData, tempData, lenData);
               }
+              if (nodeSetting->enableGPS)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getTimeOfWeek());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->enableGLO)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getTimeOfWeek());
+                strlcat(sdOutputData, tempData, lenData);
+              }
+              if (nodeSetting->enableGAL)
+              {
+                sprintf(tempData, "%d,", nodeDevice->getTimeOfWeek());
+                strlcat(sdOutputData, tempData, lenData);
+              }
             }
 
             setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups
@@ -1575,6 +1590,12 @@ static void getHelperText(char* helperText, size_t lenText)
                 strlcat(helperText, "gps_pDOP,", lenText);
               if (nodeSetting->logiTOW)
                 strlcat(helperText, "gps_iTOW,", lenText);
+              if (nodeSetting->enableGPS)
+                strlcat(helperText, "gps_EnableGPS", lenText);
+              if (nodeSetting->enableGLO)
+                strlcat(helperText, "gps_EnableGLO", lenText);
+              if (nodeSetting->enableGAL)
+                strlcat(helperText, "gps_EnableGAL", lenText);
             }
           }
           break;

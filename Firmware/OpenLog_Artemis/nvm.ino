@@ -556,6 +556,9 @@ void recordDeviceSettingsToFile()
             settingsFile.println((String)base + "logiTOW=" + nodeSetting->logiTOW);
             settingsFile.println((String)base + "i2cSpeed=" + nodeSetting->i2cSpeed);
             settingsFile.println((String)base + "useAutoPVT=" + nodeSetting->useAutoPVT);
+            settingsFile.println((String)base + "enableGPS=" + nodeSetting->enableGPS);
+            settingsFile.println((String)base + "enableGLO=" + nodeSetting->enableGLO);
+            settingsFile.println((String)base + "enableGAL=" + nodeSetting->enableGAL);
           }
           break;
         case DEVICE_PROXIMITY_VCNL4040:

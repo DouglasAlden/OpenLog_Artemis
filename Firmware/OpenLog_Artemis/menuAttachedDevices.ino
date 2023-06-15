@@ -1208,29 +1208,52 @@ void getUbloxDateTime(int &year, int &month, int &day, int &hour, int &minute, i
   }
 }
 
-/*boolean enableConstellations(uint16_t maxWait)
+boolean enableConstellations(uint16_t maxWait)
 {
   boolean success = true;
-  
-  success &= gpsSensor_ublox.enableGNSS(settings.sensor_uBlox.enableGPS, SFE_UBLOX_GNSS_ID_GPS, VAL_LAYER_RAM_BBR, maxWait);
-  success &= gpsSensor_ublox.enableGNSS(settings.sensor_uBlox.enableGLO, SFE_UBLOX_GNSS_ID_GLONASS, VAL_LAYER_RAM_BBR, maxWait);
-  success &= gpsSensor_ublox.enableGNSS(settings.sensor_uBlox.enableGAL, SFE_UBLOX_GNSS_ID_GALILEO, VAL_LAYER_RAM_BBR, maxWait);
-  success &= gpsSensor_ublox.enableGNSS(settings.sensor_uBlox.enableBDS, SFE_UBLOX_GNSS_ID_BEIDOU, VAL_LAYER_RAM_BBR, maxWait);
-  success &= gpsSensor_ublox.enableGNSS(settings.sensor_uBlox.enableQZSS, SFE_UBLOX_GNSS_ID_QZSS, VAL_LAYER_RAM_BBR, maxWait);
-  
-  if (settings.printMinorDebugMessages)
+
+  //Step through node list
+  node *temp = head;
+
+  while (temp != NULL)
   {
-    if (success)
+    switch (temp->deviceType)
     {
-      Serial.println(F("enableConstellations: successful"));
+      case DEVICE_GPS_UBLOX:
+        {
+          setQwiicPullups(0); //Disable pullups to minimize CRC issues
+
+          SFE_UBLOX_GNSS *nodeDevice = (SFE_UBLOX_GNSS *)temp->classPtr;
+          struct_ublox *nodeSetting = (struct_ublox *)temp->configPtr;
+
+          
+          success &= nodeDevice->enableGNSS(nodeSetting->enableGPS, SFE_UBLOX_GNSS_ID_GPS, maxWait);
+          success &= nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GPS, maxWait);
+          success &= nodeDevice->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GPS, maxWait);
+
+          /*success &= nodeDevice->enableGNSS(nodeSetting->enableGPS, SFE_UBLOX_GNSS_ID_GPS, VAL_LAYER_BBR, maxWait);
+          success &= nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GPS, VAL_LAYER_BBR, maxWait);
+          success &= nodeDevice->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GPS, VAL_LAYER_BBR, maxWait);
+        */
+          if (settings.printGNSSDebugMessages)
+          { 
+            if (success)
+            {
+              Serial.println(F("enableConstellations: successful"));
+            }
+            else
+            {
+              Serial.println(F("enableConstellations: failed!"));
+            }
+          }
+          
+          setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups
+        }
     }
-    else
-    {
-      Serial.println(F("enableConstellations: failed!"));
-    }
+    temp = temp->next;
   }
   return (success);
-}*/
+}
 
 void gnssFactoryDefault(void)
 {
