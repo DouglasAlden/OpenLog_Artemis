@@ -371,6 +371,9 @@ void menuAttachedDevices()
           case DEVICE_BMP581:
             SerialPrintf3("%s BMP581 Barometric Pressure/Temp Sensor %s\r\n", strDeviceMenu, strAddress);
             break;
+          case DEVICE_HUMIDITY_SHTSENSOR:
+            SerialPrintf3("%s SHT85 Humidity Sensor %s\r\n", strDeviceMenu, strAddress);
+            break;
           /*case DEVICE_GPS_XA1110:
             SerialPrintf3("%s XA1110 GPS Receiver %s\r\n", strDeviceMenu, strAddress);
             break;
@@ -1230,11 +1233,7 @@ boolean enableConstellations(uint16_t maxWait)
           success &= nodeDevice->enableGNSS(nodeSetting->enableGPS, SFE_UBLOX_GNSS_ID_GPS, maxWait);
           success &= nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GLONASS, maxWait);
           success &= nodeDevice->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GALILEO, maxWait);
-
-          /*success &= nodeDevice->enableGNSS(nodeSetting->enableGPS, SFE_UBLOX_GNSS_ID_GPS, VAL_LAYER_BBR, maxWait);
-          success &= nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GPS, VAL_LAYER_BBR, maxWait);
-          success &= nodeDevice->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GPS, VAL_LAYER_BBR, maxWait);
-        */
+          
           if (settings.printGNSSDebugMessages)
           { 
             if (success)
@@ -3300,6 +3299,57 @@ void menuConfigure_BMP581(void *configPtr)
     {
       if (incoming == '2')
         sensorSetting->logPressure ^= 1;
+      else if (incoming == '3')
+        sensorSetting->logTemperature ^= 1;
+      else if (incoming == 'x')
+        break;
+      else if (incoming == STATUS_GETBYTE_TIMEOUT)
+        break;
+      else
+        printUnknown(incoming);
+    }
+    else if (incoming == 'x')
+      break;
+    else if (incoming == STATUS_GETBYTE_TIMEOUT)
+      break;
+    else
+      printUnknown(incoming);
+  }
+}
+
+void menuConfigure_SHTSensor(void *configPtr)
+{
+  struct_SHTSensor *sensorSetting = (struct_SHTSensor*)configPtr;
+
+  while (1)
+  {
+    SerialPrintln(F(""));
+    SerialPrintln(F("Menu: Configure SHT85 Humidity Sensor"));
+
+    SerialPrint(F("1) Sensor Logging: "));
+    if (sensorSetting->log == true) SerialPrintln(F("Enabled"));
+    else SerialPrintln(F("Disabled"));
+
+    if (sensorSetting->log == true)
+    {
+      SerialPrint(F("2) Log Humidity: "));
+      if (sensorSetting->logHumidity == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+
+      SerialPrint(F("3) Log Temperature: "));
+      if (sensorSetting->logTemperature == true) SerialPrintln(F("Enabled"));
+      else SerialPrintln(F("Disabled"));
+    }
+    SerialPrintln(F("x) Exit"));
+
+    byte incoming = getByteChoice(menuTimeout); //Timeout after x seconds
+
+    if (incoming == '1')
+      sensorSetting->log ^= 1;
+    else if (sensorSetting->log == true)
+    {
+      if (incoming == '2')
+        sensorSetting->logHumidity ^= 1;
       else if (incoming == '3')
         sensorSetting->logTemperature ^= 1;
       else if (incoming == 'x')

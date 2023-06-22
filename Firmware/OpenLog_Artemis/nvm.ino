@@ -845,6 +845,14 @@ void recordDeviceSettingsToFile()
             settingsFile.println((String)base + "gain16=" + nodeSetting->gain16);
           }
           break;
+        case DEVICE_HUMIDITY_SHTSENSOR:
+          {
+            struct_SHTSensor *nodeSetting = (struct_SHTSensor *)temp->configPtr;
+            settingsFile.println((String)base + "log=" + nodeSetting->log);
+            settingsFile.println((String)base + "logHumidity=" + nodeSetting->logHumidity);
+            settingsFile.println((String)base + "logTemperature=" + nodeSetting->logTemperature);
+          }
+          break;
         /*case DEVICE_GPS_XA1110:
           {
             struct_xa1110 *nodeSetting = (struct_xa1110 *)temp->configPtr;
@@ -1098,6 +1106,12 @@ bool parseDeviceLine(char* str) {
             nodeSetting->i2cSpeed = d;
           else if (strcmp(deviceSettingName, "useAutoPVT") == 0)
             nodeSetting->useAutoPVT = d;
+          else if (strcmp(deviceSettingName, "enableGPS") == 0)
+            nodeSetting->enableGPS = d;
+          else if (strcmp(deviceSettingName, "enableGLO") == 0)
+            nodeSetting->enableGLO = d;
+          else if (strcmp(deviceSettingName, "enableGAL") == 0)
+            nodeSetting->enableGAL = d;
           else
             SerialPrintf2("Unknown device setting: %s\r\n", deviceSettingName);
         }
@@ -1591,6 +1605,19 @@ bool parseDeviceLine(char* str) {
             nodeSetting->gain8 = d;
           else if (strcmp(deviceSettingName, "gain16") == 0)
             nodeSetting->gain16 = d;
+          else
+            SerialPrintf2("Unknown device setting: %s\r\n", deviceSettingName);
+        }
+        break;
+      case DEVICE_HUMIDITY_SHTSENSOR:
+        {
+          struct_SHTSensor *nodeSetting = (struct_SHTSensor *)deviceConfigPtr; //Create a local pointer that points to same spot as node does
+          if (strcmp(deviceSettingName, "log") == 0)
+            nodeSetting->log = d;
+          else if (strcmp(deviceSettingName, "logHumidity") == 0)
+            nodeSetting->logHumidity = d;
+          else if (strcmp(deviceSettingName, "logTemperature") == 0)
+            nodeSetting->logTemperature = d;
           else
             SerialPrintf2("Unknown device setting: %s\r\n", deviceSettingName);
         }

@@ -319,6 +319,9 @@ icm_20948_DMP_data_t dmpData; // Global storage for the DMP data - extracted fro
 #include "SparkFun_ADS1015_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_ADS1015
 #include "SparkFun_KX13X.h" //Click here to get the library: http://librarymanager/All#SparkFun_KX13X
 #include "SparkFun_BMP581_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_BMP581
+#include "TinyGPSPlus.h" //Click here to get the library: http://librarymanager/All#TinyGPSPlus
+//#include "SHT85.h" // Click here to get the library: http://librarymanager/All#SHT85
+#include "SHTSensor.h" Click here to get the library: http://librarymanager/All#arduino-sht
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables
@@ -334,7 +337,7 @@ unsigned int totalCharactersPrinted = 0; //Limit output rate based on baud rate 
 bool takeReading = true; //Goes true when enough time has passed between readings or we've woken from sleep
 bool sleepAfterRead = false; //Used to keep the code awake for at least minimumAwakeTimeMillis
 const uint64_t maxUsBeforeSleep = 2000000ULL; //Number of us between readings before sleep is activated.
-const byte menuTimeout = 15; //Menus will exit/timeout after this number of seconds
+const byte menuTimeout = 32; //Menus will exit/timeout after this number of seconds
 const int sdCardMenuTimeout = 60; // sdCard menu will exit/timeout after this number of seconds
 volatile static bool stopLoggingSeen = false; //Flag to indicate if we should stop logging
 uint64_t qwiicPowerOnTime = 0; //Used to delay after Qwiic power on to allow sensors to power on, then answer autodetect

@@ -1306,6 +1306,30 @@ void gatherDeviceValues(char * sdOutputData, size_t lenData)
             }
           }
           break;
+        case DEVICE_HUMIDITY_SHTSENSOR:
+          {
+            SHTSensor *nodeDevice = (SHTSensor *)temp->classPtr;
+            struct_SHTSensor *nodeSetting = (struct_SHTSensor *)temp->configPtr;
+            if (nodeSetting->log == true)
+            {
+              if (nodeDevice->readSample())
+              {
+                if (nodeSetting->logHumidity)
+                {
+                  olaftoa(nodeDevice->getHumidity(), tempData1, 2, sizeof(tempData) / sizeof(char));
+                  sprintf(tempData, "%s,", tempData1);
+                  strlcat(sdOutputData, tempData, lenData);
+                }
+                if (nodeSetting->logTemperature)
+                {
+                  olaftoa(nodeDevice->getTemperature(), tempData1, 2, sizeof(tempData) / sizeof(char));
+                  sprintf(tempData, "%s,", tempData1);
+                  strlcat(sdOutputData, tempData, lenData);
+                }
+              }
+            }
+          }
+          break;
         /*case DEVICE_GPS_XA1110:
           {
             setQwiicPullups(0); //Disable pullups to minimize CRC issues
@@ -1969,6 +1993,18 @@ static void getHelperText(char* helperText, size_t lenText)
               if (nodeSetting->logTemperature)
                 strlcat(helperText, "temp_degC,", lenText);
             }          }
+          break;
+        case DEVICE_HUMIDITY_SHTSENSOR:
+          {
+            struct_SHTSensor *nodeSetting = (struct_SHTSensor *)temp->configPtr;
+            if (nodeSetting->log)
+            {
+              if (nodeSetting->logHumidity)
+                strlcat(helperText, "humidity_%,", lenText);
+              if (nodeSetting->logTemperature)
+                strlcat(helperText, "degC,", lenText);
+            }
+          }
           break;
         /*case DEVICE_GPS_XA1110:
           {

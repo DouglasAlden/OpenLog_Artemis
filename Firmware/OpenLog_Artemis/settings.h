@@ -33,6 +33,7 @@ typedef enum
   DEVICE_KX134,
   DEVICE_ADS1015,
   DEVICE_BMP581,
+  DEVICE_HUMIDITY_SHTSENSOR,
   /*DEVICE_GPS_XA1110,*/
 
   DEVICE_TOTAL_DEVICES, //Marks the end, used to iterate loops
@@ -476,6 +477,13 @@ struct struct_ADS1015 {
 struct struct_BMP581 {
   bool log = true;
   bool logPressure = true;
+  bool logTemperature = true;
+  unsigned long powerOnDelayMillis = minimumQwiicPowerOnDelay; // Wait for at least this many millis before communicating with this device. Increase if required!
+};
+
+struct struct_SHTSensor {
+  bool log = true;
+  bool logHumidity = true;
   bool logTemperature = true;
   unsigned long powerOnDelayMillis = minimumQwiicPowerOnDelay; // Wait for at least this many millis before communicating with this device. Increase if required!
 };

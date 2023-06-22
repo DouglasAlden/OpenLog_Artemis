@@ -297,6 +297,12 @@ bool addDevice(deviceType_e deviceType, uint8_t address, uint8_t muxAddress, uin
         temp->configPtr = new struct_BMP581;
       }
       break;
+    case DEVICE_HUMIDITY_SHTSENSOR:
+      {
+        temp->classPtr = new SHTSensor;
+        temp->configPtr = new struct_SHTSensor;
+      }
+      break;
     /*case DEVICE_GPS_XA1110:
       {
         temp->classPtr = new SFE_XA1110_GNSS;
@@ -642,6 +648,15 @@ bool beginQwiicDevices()
             temp->online = true;
         }
         break;
+      case DEVICE_HUMIDITY_SHTSENSOR:
+        {
+          SHTSensor *tempDevice = (SHTSensor *)temp->classPtr;
+          struct_SHTSensor *nodeSetting = (struct_SHTSensor *)temp->configPtr; //Create a local pointer that points to same spot as node does
+          if (nodeSetting->powerOnDelayMillis > qwiicPowerOnDelayMillis) qwiicPowerOnDelayMillis = nodeSetting->powerOnDelayMillis; // Increase qwiicPowerOnDelayMillis if required
+          if (tempDevice->init(qwiic)) //Wire port. Returns 1 on success.
+            temp->online = true;
+        }
+        break;
       /*case DEVICE_GPS_XA1110:
         {
           setQwiicPullups(0); //Disable pullups for u-blox comms.
@@ -785,6 +800,10 @@ void configureDevice(node * temp)
         sensor->saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the current ioPortsettings to flash and BBR
 
         sensor->setAutoPVT(nodeSetting->useAutoPVT); // Use autoPVT as required
+
+        //sensor->enableGNSS(nodeSetting->enableGPS, SFE_UBLOX_GNSS_ID_GPS, 2500);
+        //sensor->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GLONASS, 2500);
+        //sensor->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GALILEO, 2500);
 
         if (1000000ULL / settings.usBetweenReadings <= 1) //If we are slower than 1Hz logging rate
           // setNavigationFrequency expects a uint8_t to define the number of updates per second
@@ -1040,6 +1059,9 @@ void configureDevice(node * temp)
     case DEVICE_BMP581:
       //Nothing to configure
       break;
+    case DEVICE_HUMIDITY_SHTSENSOR:
+      //Nothing to configure
+      break;
     /*case DEVICE_GPS_XA1110:
       {
         setQwiicPullups(0); //Disable pullups for u-blox comms.
@@ -1191,6 +1213,9 @@ FunctionPointer getConfigFunctionPtr(uint8_t nodeNumber)
     case DEVICE_BMP581:
       ptr = (FunctionPointer)menuConfigure_BMP581;
       break;
+    case DEVICE_HUMIDITY_SHTSENSOR:
+      ptr = (FunctionPointer)menuConfigure_SHTSensor;
+      break;
     /*case DEVICE_GPS_XA1110:
       ptr = (FunctionPointer)menuConfigure_XA1110;
       break;
@@ -1334,6 +1359,7 @@ void swap(struct node * a, struct node * b)
 #define ADR_AHT20 0x38
 #define ADR_MS8607 0x40 //Humidity portion of the MS8607 sensor
 #define ADR_UBLOX 0x42 //But can be set to any address
+#define ADR_SHTSensor 0x44
 #define ADR_ADS122C04 0x45 //Alternates: 0x44, 0x41 and 0x40
 #define ADR_BMP581 0x47 //Alternates: 0x46
 #define ADR_TMP117 0x48 //Alternates: 0x49, 0x4A, and 0x4B
@@ -1488,6 +1514,13 @@ deviceType_e testDevice(uint8_t i2cAddress, uint8_t muxAddress, uint8_t portNumb
       }
       break;
     case 0x44:
+      {
+        //Confidence: High - 16 bit ID check with CRC
+        SHTSensor sensor;
+        if (sensor.init(qwiic) == true) //Wire port. Device returns 1 upon success.
+          return (DEVICE_HUMIDITY_SHTSENSOR);
+      }
+      break;
     case 0x45:
       {
         //Confidence: High - Configures ADC mode
@@ -1983,6 +2016,9 @@ const char* getDeviceName(deviceType_e deviceNumber)
       break;
     case DEVICE_BMP581:
       return "Pressure-BMP581";
+      break;
+    case DEVICE_HUMIDITY_SHTSENSOR:
+      return "Humidity-SHTSensor";
       break;
     /*case DEVICE_GPS_XA1110:
       return "GPS-XA1110";
