@@ -380,7 +380,8 @@ void gatherDeviceValues(char * sdOutputData, size_t lenData)
               }
               if (nodeSetting->logFixType)
               {
-                sprintf(tempData, "%d,", nodeDevice->getFixType());
+                nodeSetting->gnssFixType = nodeDevice->getFixType();
+                sprintf(tempData, "%d,", nodeSetting->gnssFixType);
                 strlcat(sdOutputData, tempData, lenData);
               }
               if (nodeSetting->logCarrierSolution)
@@ -1599,12 +1600,12 @@ static void getHelperText(char* helperText, size_t lenText)
                 strlcat(helperText, "gps_pDOP,", lenText);
               if (nodeSetting->logiTOW)
                 strlcat(helperText, "gps_iTOW,", lenText);
-              if (nodeSetting->enableGPS)
+              /*if (nodeSetting->enableGPS)
                 strlcat(helperText, "gps_EnableGPS", lenText);
               if (nodeSetting->enableGLO)
                 strlcat(helperText, "gps_EnableGLO", lenText);
               if (nodeSetting->enableGAL)
-                strlcat(helperText, "gps_EnableGAL", lenText);
+                strlcat(helperText, "gps_EnableGAL", lenText);*/
             }
           }
           break;

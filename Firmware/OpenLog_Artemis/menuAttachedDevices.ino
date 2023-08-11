@@ -1134,11 +1134,20 @@ void menuConfigure_ublox(void *configPtr)
           SerialPrintln(F("Reset GNSS aborted"));
       } 
       else if (incoming == 18)
+      {
         sensorSetting->enableGPS ^= 1;
+        enableConstellations(SFE_UBLOX_GNSS_ID_GPS, 2500);
+      }
       else if (incoming == 19)
+      {
         sensorSetting->enableGLO ^= 1;
+        enableConstellations(SFE_UBLOX_GNSS_ID_GLONASS, 2500);
+      }
       else if (incoming == 20)
+      {
         sensorSetting->enableGAL ^= 1;
+        enableConstellations(SFE_UBLOX_GNSS_ID_GALILEO, 2500);
+      }
       else if (incoming == STATUS_PRESSED_X)
         break;
       else if (incoming == STATUS_GETNUMBER_TIMEOUT)
@@ -1211,9 +1220,9 @@ void getUbloxDateTime(int &year, int &month, int &day, int &hour, int &minute, i
   }
 }
 
-boolean enableConstellations(uint16_t maxWait)
+boolean enableConstellations(sfe_ublox_gnss_ids_e id, uint16_t maxWait)
 {
-  boolean success = true;
+  boolean success;
 
   //Step through node list
   node *temp = head;
@@ -1223,34 +1232,44 @@ boolean enableConstellations(uint16_t maxWait)
     switch (temp->deviceType)
     {
       case DEVICE_GPS_UBLOX:
+      {
+        setQwiicPullups(0); //Disable pullups to minimize CRC issues
+          
+        SFE_UBLOX_GNSS *nodeDevice = (SFE_UBLOX_GNSS *)temp->classPtr;
+        struct_ublox *nodeSetting = (struct_ublox *)temp->configPtr;
+
+        switch (id)
         {
-          setQwiicPullups(0); //Disable pullups to minimize CRC issues
-
-          SFE_UBLOX_GNSS *nodeDevice = (SFE_UBLOX_GNSS *)temp->classPtr;
-          struct_ublox *nodeSetting = (struct_ublox *)temp->configPtr;
-
-          
-          success &= nodeDevice->enableGNSS(nodeSetting->enableGPS, SFE_UBLOX_GNSS_ID_GPS, maxWait);
-          success &= nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GLONASS, maxWait);
-          success &= nodeDevice->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GALILEO, maxWait);
-          
-          if (settings.printGNSSDebugMessages)
-          { 
-            if (success)
+          case SFE_UBLOX_GNSS_ID_GPS:
             {
-              Serial.println(F("enableConstellations: successful"));
+            success = nodeDevice->enableGNSS(nodeSetting->enableGPS, SFE_UBLOX_GNSS_ID_GPS, maxWait);
             }
-            else
+            break;
+
+          case SFE_UBLOX_GNSS_ID_GLONASS:
             {
-              Serial.println(F("enableConstellations: failed!"));
+              success = nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GLONASS, maxWait);
             }
-          }
-          
-          setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups
+            break;
+
+          case SFE_UBLOX_GNSS_ID_GALILEO:
+            {
+              success = nodeDevice->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GALILEO, maxWait); 
+            }
+            break;
         }
-    }
-    temp = temp->next;
+      }
+    }      
   }
+  if (success)
+  {
+    Serial.println(F("enableConstellations: successful"));
+  }
+  else
+  {
+    Serial.println(F("enableConstellations: failed!"));
+  }
+
   return (success);
 }
 
