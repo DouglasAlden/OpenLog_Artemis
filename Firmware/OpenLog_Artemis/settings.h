@@ -145,9 +145,7 @@ struct struct_ublox {
   unsigned long powerOnDelayMillis = 60000; // Wait for at least this many millis before communicating with this device
   unsigned long powerOnDelayMillisShort = 2000; // Minimum wait time for GPS
   bool useAutoPVT = false; // Use autoPVT - to allow data collection at rates faster than GPS
-  int sampleInt = 5; // GPS will be sampled once every sampleInt of environmental sensors, for example if 
-                     // environmental sensors are sample every 2 minutes then the GPS will be sampled once
-                     // every 10 minutes.
+  int sampleInt = 5; // Legacy setting. GPS logging is scheduled by gpsLogIntervalSeconds.
   int gnssFixType;   // keeping track of the fix type to turn off gps early
 };
 
@@ -507,9 +505,7 @@ struct struct_xa1110 {
   unsigned long powerOnDelayMillis = 20000; // Wait for at least this many millis before communicating with this device
   unsigned long powerOnDelayMillisShort = 1000; // Minimum wait time for GPS
   bool useAutoPVT = false; // Use autoPVT - to allow data collection at rates faster than GPS
-  int sampleInt = 5; // GPS will be sampled once every sampleInt of environmental sensors, for example if 
-                     // environmental sensors are sample every 2 minutes then the GPS will be sampled once
-                     // every 10 minutes.
+  int sampleInt = 5; // Legacy setting. GPS logging is scheduled by gpsLogIntervalSeconds.
 };
 
 //This is all the settings that can be set on OpenLog. It's recorded to NVM and the config file.
@@ -520,24 +516,24 @@ struct struct_settings {
   int nextDataLogNumber = 1;
   //uint32_t: Largest is 4,294,967,295 or 4,294s or 71 minutes between readings.
   //uint64_t: Largest is 9,223,372,036,854,775,807 or 9,223,372,036,854s or 292,471 years between readings.
-  uint64_t usBetweenReadings = 100000000ULL; //Default to 100,000,000us = 1ms = 1 reading per second.
+  uint64_t usBetweenReadings = 180000000ULL; //Default to 180,000,000us = 3 minutes between environmental readings.
   //100,000 / 1000 = 100ms. 1 / 100ms = 10Hz
   //recordPerSecond (Hz) = 1 / ((usBetweenReadings / 1000UL) / 1000UL)
   //recordPerSecond (Hz) = 1,000,000 / usBetweenReadings
   bool logMaxRate = false;
   bool enableRTC = true;
-  bool enableIMU = true;
+  bool enableIMU = false;
   bool enableTerminalOutput = true;
   bool logDate = true;
   bool logTime = true;
   bool logData = true;
-  bool logSerial = true;
+  bool logSerial = false;
   bool logIMUAccel = true;
   bool logIMUGyro = true;
   bool logIMUMag = true;
   bool logIMUTemp = true;
   bool logRTC = true;
-  bool logHertz = true;
+  bool logHertz = false;
   bool correctForDST = false;
   int dateStyle = 2; // 0 : mm/dd/yyyy, 1 : dd/mm/yyyy, 2 : yyyy/mm/dd, 3 : ISO8601 (date and time)
   bool hour24Style = true;
@@ -560,14 +556,14 @@ struct struct_settings {
   int  qwiicBusPowerUpDelayMs = 250; // This is the minimum delay between the qwiic bus power being turned on and communication with the qwiic devices being attempted
   bool printMeasurementCount = false;
   bool enablePwrLedDuringSleep = false;
-  bool logVIN = false;
+  bool logVIN = true;
   unsigned long openNewLogFilesAfter = 0; //Default to 0 (Never) seconds
   float vinCorrectionFactor = 1.47; //Correction factor for the VIN measurement; to compensate for the divider impedance
   bool useGPIO32ForStopLogging = false; //If true, use GPIO as a stop logging button
   uint32_t qwiicBusPullUps = 1; //Default to 1.5k I2C pull-ups - internal to the Artemis
   bool outputSerial = false; // Output the sensor data on the TX pin
   uint8_t zmodemStartDelay = 20; // Wait for this many seconds before starting the zmodem file transfer
-  bool enableLowBatteryDetection = false; // Low battery detection
+  bool enableLowBatteryDetection = true; // Low battery detection
   float lowBatteryThreshold = 3.4; // Low battery voltage threshold (Volts)
   bool frequentFileAccessTimestamps = false; // If true, the log file access timestamps are updated every 500ms
   bool useGPIO11ForTrigger = false; // If true, use GPIO to trigger sensor logging

@@ -147,8 +147,8 @@
     Resolve issue #87
 */
 
-const int FIRMWARE_VERSION_MAJOR = 2;
-const int FIRMWARE_VERSION_MINOR = 5;
+const int FIRMWARE_VERSION_MAJOR = 3;
+const int FIRMWARE_VERSION_MINOR = 0;
 
 //Define the OLA board identifier:
 //  This is an int which is unique to this variant of the OLA and which allows us
@@ -321,7 +321,7 @@ icm_20948_DMP_data_t dmpData; // Global storage for the DMP data - extracted fro
 #include "SparkFun_BMP581_Arduino_Library.h" //Click here to get the library: http://librarymanager/All#SparkFun_BMP581
 #include "TinyGPSPlus.h" //Click here to get the library: http://librarymanager/All#TinyGPSPlus
 //#include "SHT85.h" // Click here to get the library: http://librarymanager/All#SHT85
-#include "SHTSensor.h" Click here to get the library: http://librarymanager/All#arduino-sht
+#include "SHTSensor.h" // Click here to get the library: http://librarymanager/All#arduino-sht
 //-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
 
 //Global variables
@@ -337,6 +337,12 @@ unsigned int totalCharactersPrinted = 0; //Limit output rate based on baud rate 
 bool takeReading = true; //Goes true when enough time has passed between readings or we've woken from sleep
 bool sleepAfterRead = false; //Used to keep the code awake for at least minimumAwakeTimeMillis
 const uint64_t maxUsBeforeSleep = 2000000ULL; //Number of us between readings before sleep is activated.
+const uint32_t gpsLogIntervalSeconds = 540; // Log GPS every 9 minutes so it aligns with the 3-minute environmental interval
+bool logEnvironmentalThisReading = true; // True when environmental sensors and VIN should be logged
+bool logGpsThisReading = false; // True when GPS fields should be queried and logged
+bool nextWakeLogsEnvironmental = true; // Set before sleep to describe the next scheduled wake
+bool nextWakeLogsGps = false; // Set before sleep to describe the next scheduled wake
+uint64_t nextEnvironmentalLogMillis = 0; // RTC-based time for the next environmental/VIN sample
 const byte menuTimeout = 32; //Menus will exit/timeout after this number of seconds
 const int sdCardMenuTimeout = 60; // sdCard menu will exit/timeout after this number of seconds
 volatile static bool stopLoggingSeen = false; //Flag to indicate if we should stop logging
@@ -469,7 +475,7 @@ void setup() {
   Serial.flush(); //Complete any previous prints
   Serial.begin(settings.serialTerminalBaudRate);
 
-  SerialPrintf3("Artemis OpenLog v%d.%d\r\n", FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR);
+  SerialPrintf3("PCT HikeWeather Logger v%d.%d\r\n", FIRMWARE_VERSION_MAJOR, FIRMWARE_VERSION_MINOR);
 
   if (settings.useGPIO32ForStopLogging == true)
   {
@@ -540,6 +546,7 @@ void setup() {
     beginQwiicDevices(); //Begin() each device in the node list
     loadDeviceSettingsFromFile(); //Load config settings into node list
     configureQwiicDevices(); //Apply config settings to each device in the node list
+    setRTCFromGPSAtStartup();
     int deviceCount = printOnlineDevice(); // Pretty-print the online devices
 
     if ((deviceCount == 0) && (settings.resetOnZeroDeviceCount == true)) // Check for resetOnZeroDeviceCount
@@ -572,6 +579,7 @@ void setup() {
   digitalWrite(PIN_STAT_LED, LOW); // Turn the STAT LED off now that everything is configured
 
   lastAwakeTimeMillis = rtcMillis();
+  nextEnvironmentalLogMillis = lastAwakeTimeMillis; // Log environmental sensors and VIN on the first row
 
   //If we are immediately going to go to sleep after the first reading then
   //first present the user with the config menu in case they need to change something
@@ -686,6 +694,7 @@ void loop() {
   {
     takeReading = false;
     lastReadTime = micros();
+    updateLogFlagsForThisReading();
 
 #ifdef PRINT_LAST_WRITE_TIME
     if (settings.printDebugMessages)
@@ -723,7 +732,11 @@ void loop() {
     }
 #endif
 
+    if (logGpsThisReading)
+      waitForUbloxFix(getUbloxMaxFixWaitMillis());
+
     getData(sdOutputData, sizeof(sdOutputData)); //Query all enabled sensors for data
+    updateNextEnvironmentalLogMillis();
 
     //Print to terminal
     if (settings.enableTerminalOutput == true)
@@ -852,7 +865,7 @@ uint32_t howLongToSleepFor(void)
   }
   else // checkSleepOnUsBetweenReadings
   {
-    msToSleep = (uint32_t)(settings.usBetweenReadings / 1000ULL); // Sleep for usBetweenReadings
+    msToSleep = getMillisUntilNextScheduledLog(); // Sleep until the next environmental or GPS interval
   }
 
   uint32_t sysTicksToSleep;
@@ -868,6 +881,238 @@ uint32_t howLongToSleepFor(void)
   }
 
   return (sysTicksToSleep);
+}
+
+uint32_t secondsOfDayFromRTC(void)
+{
+  myRTC.getTime();
+  return ((uint32_t)myRTC.hour * 3600UL) + ((uint32_t)myRTC.minute * 60UL) + myRTC.seconds;
+}
+
+uint32_t millisUntilNextGpsLog(void)
+{
+  if (hasOnlineLoggingUblox() == false)
+    return (0xFFFFFFFFUL);
+
+  uint32_t secondsOfDay = secondsOfDayFromRTC();
+  uint32_t secondsSinceGpsBoundary = secondsOfDay % gpsLogIntervalSeconds;
+  uint32_t secondsUntilGps = gpsLogIntervalSeconds - secondsSinceGpsBoundary;
+
+  if (secondsUntilGps == 0)
+    secondsUntilGps = gpsLogIntervalSeconds;
+
+  return (secondsUntilGps * 1000UL);
+}
+
+uint32_t millisUntilNextEnvironmentalLog(void)
+{
+  uint64_t now = rtcMillis();
+
+  if (nextEnvironmentalLogMillis == 0)
+    nextEnvironmentalLogMillis = now;
+
+  if (now >= nextEnvironmentalLogMillis)
+    return (0);
+
+  uint64_t millisUntilEnvironmental = nextEnvironmentalLogMillis - now;
+  if (millisUntilEnvironmental > 0xFFFFFFFFULL)
+    return (0xFFFFFFFFUL);
+
+  return ((uint32_t)millisUntilEnvironmental);
+}
+
+uint32_t getMillisUntilNextScheduledLog(void)
+{
+  uint32_t millisUntilEnvironmental = millisUntilNextEnvironmentalLog();
+  uint32_t millisUntilGps = millisUntilNextGpsLog();
+  uint32_t millisUntilNext = min(millisUntilEnvironmental, millisUntilGps);
+
+  nextWakeLogsEnvironmental = (millisUntilEnvironmental <= millisUntilNext);
+  nextWakeLogsGps = (millisUntilGps <= millisUntilNext);
+
+  if (millisUntilNext < 1000UL)
+    millisUntilNext = 1000UL; // Avoid immediate re-sleep churn at an exact boundary
+
+  return (millisUntilNext);
+}
+
+void updateLogFlagsForThisReading(void)
+{
+  uint32_t secondsOfDay = secondsOfDayFromRTC();
+  uint64_t now = rtcMillis();
+  bool gpsAvailable = hasOnlineLoggingUblox();
+
+  if (nextEnvironmentalLogMillis == 0)
+    nextEnvironmentalLogMillis = now;
+
+  logEnvironmentalThisReading = nextWakeLogsEnvironmental || (now >= nextEnvironmentalLogMillis);
+  logGpsThisReading = gpsAvailable && (nextWakeLogsGps || ((secondsOfDay % gpsLogIntervalSeconds) <= 2));
+
+  // Always record something when the scheduler wakes a little early.
+  if ((logEnvironmentalThisReading == false) && (logGpsThisReading == false))
+    logEnvironmentalThisReading = true;
+}
+
+void updateNextEnvironmentalLogMillis(void)
+{
+  if (logEnvironmentalThisReading == false)
+    return;
+
+  uint64_t intervalMillis = settings.usBetweenReadings / 1000ULL;
+  if (intervalMillis == 0)
+    intervalMillis = 1;
+
+  if (nextEnvironmentalLogMillis == 0)
+    nextEnvironmentalLogMillis = rtcMillis();
+
+  do
+  {
+    nextEnvironmentalLogMillis += intervalMillis;
+  } while (rtcMillis() >= nextEnvironmentalLogMillis);
+}
+
+unsigned long getUbloxMaxFixWaitMillis(void)
+{
+  unsigned long maxWait = 0;
+  node *temp = head;
+
+  while (temp != NULL)
+  {
+    if (temp->deviceType == DEVICE_GPS_UBLOX)
+    {
+      struct_ublox *nodeSetting = (struct_ublox *)temp->configPtr;
+      if (nodeSetting->powerOnDelayMillis > maxWait)
+        maxWait = nodeSetting->powerOnDelayMillis;
+    }
+    temp = temp->next;
+  }
+
+  if (maxWait == 0)
+    maxWait = 60000;
+
+  return (maxWait);
+}
+
+unsigned long getUbloxShortPowerOnDelayMillis(void)
+{
+  unsigned long maxWait = 0;
+  node *temp = head;
+
+  while (temp != NULL)
+  {
+    if (temp->deviceType == DEVICE_GPS_UBLOX)
+    {
+      struct_ublox *nodeSetting = (struct_ublox *)temp->configPtr;
+      if (nodeSetting->powerOnDelayMillisShort > maxWait)
+        maxWait = nodeSetting->powerOnDelayMillisShort;
+    }
+    temp = temp->next;
+  }
+
+  if (maxWait == 0)
+    maxWait = 2000;
+
+  return (maxWait);
+}
+
+bool hasOnlineLoggingUblox(void)
+{
+  node *temp = head;
+
+  while (temp != NULL)
+  {
+    if ((temp->deviceType == DEVICE_GPS_UBLOX) && (temp->online == true))
+    {
+      struct_ublox *nodeSetting = (struct_ublox *)temp->configPtr;
+      if (nodeSetting->log == true)
+        return (true);
+    }
+    temp = temp->next;
+  }
+
+  return (false);
+}
+
+bool waitForUbloxFix(unsigned long maxWaitMillis)
+{
+  uint64_t start = rtcMillis();
+  bool fixAcquired = false;
+
+  while ((rtcMillis() - start) < (uint64_t)maxWaitMillis)
+  {
+    node *temp = head;
+
+    while (temp != NULL)
+    {
+      if ((temp->deviceType == DEVICE_GPS_UBLOX) && (temp->online == true))
+      {
+        setQwiicPullups(0);
+
+        SFE_UBLOX_GNSS *nodeDevice = (SFE_UBLOX_GNSS *)temp->classPtr;
+        struct_ublox *nodeSetting = (struct_ublox *)temp->configPtr;
+
+        if (nodeSetting->useAutoPVT)
+          nodeDevice->flushPVT();
+
+        if (nodeDevice->getPVT(1000))
+        {
+          nodeSetting->gnssFixType = nodeDevice->getFixType(0);
+          if ((nodeSetting->gnssFixType >= 2) && nodeDevice->getGnssFixOk(0) && (nodeDevice->getInvalidLlh(0) == false))
+            fixAcquired = true;
+        }
+
+        if (fixAcquired == false)
+        {
+          nodeSetting->gnssFixType = nodeDevice->getFixType(1000);
+          if ((nodeSetting->gnssFixType >= 2) && nodeDevice->getGnssFixOk(0) && (nodeDevice->getInvalidLlh(0) == false))
+            fixAcquired = true;
+        }
+
+        setQwiicPullups(settings.qwiicBusPullUps);
+
+        if (fixAcquired)
+          return (true);
+      }
+      temp = temp->next;
+    }
+
+    checkBattery();
+    delay(1000);
+  }
+
+  return (false);
+}
+
+void setRTCFromGPSAtStartup(void)
+{
+  if (hasOnlineLoggingUblox() == false)
+    return;
+
+  waitForUbloxFix(getUbloxShortPowerOnDelayMillis());
+
+  myRTC.getTime(); // Preserve current RTC values if GPS time is invalid
+  int dd = myRTC.dayOfMonth;
+  int mm = myRTC.month;
+  int yy = myRTC.year + 2000;
+  int h = myRTC.hour;
+  int m = myRTC.minute;
+  int s = myRTC.seconds;
+  int ms = myRTC.hundredths * 10;
+  bool dateValid = false;
+  bool timeValid = false;
+
+  getGPSDateTime(yy, mm, dd, h, m, s, ms, dateValid, timeValid);
+
+  if ((dateValid == true) && (timeValid == true))
+  {
+    myRTC.setTime((ms / 10), s, m, h, dd, mm, (yy - 2000));
+    lastSDFileNameChangeTime = rtcMillis();
+    SerialPrintln(F("RTC set from GPS at startup"));
+  }
+  else
+  {
+    SerialPrintln(F("Warning: GPS date/time invalid at startup. RTC was not changed."));
+  }
 }
 
 bool checkIfItIsTimeToSleep(void)

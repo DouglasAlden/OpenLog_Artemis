@@ -1,0 +1,25 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Arduino: Compile OpenLog Artemis",
+            "type": "shell",
+            "command": "arduino-cli",
+            "args": [
+                "compile",
+                "--fqbn",
+                "SparkFun:apollo3:sfe_artemis_atp",
+                "Firmware\\OpenLog_Artemis",
+                "--libraries",
+                "libraries",
+                "--output-dir",
+                "Firmware\\OpenLog_Artemis\\build"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": []
+        }
+    ]
+}

@@ -1,6 +1,21 @@
 SparkFun OpenLog Artemis
 ===========================================================
 
+This repository contains the OpenLog Artemis firmware codebase currently being
+used for this project. The firmware version is defined in
+`Firmware/OpenLog_Artemis/OpenLog_Artemis.ino`:
+
+```cpp
+const int FIRMWARE_VERSION_MAJOR = 2;
+const int FIRMWARE_VERSION_MINOR = 5;
+```
+
+The current build target is the SparkFun RedBoard Artemis ATP:
+
+```text
+SparkFun:apollo3:sfe_artemis_atp
+```
+
 <table class="table table-hover table-striped table-bordered">
   <tr align="center">
    <td><a href="https://www.sparkfun.com/products/16832"><img src="https://cdn.sparkfun.com//assets/parts/1/5/7/5/3/16832-SparkFun_OpenLog_Artemis-02a.jpg"></a></td>
@@ -71,6 +86,88 @@ Repository Contents
 * **/Binaries** - The binary files for the different versions of the OLA firmware.
 * **/Firmware** - The main sketch that runs OpenLog Artemis as well as a variety of sketches to test various sensor interfaces and power saving states.
 * **/Hardware** - Eagle files.
+* **/libraries** - Project-local Arduino libraries used by the firmware build.
+* **/.vscode** - VS Code project settings and build task for `arduino-cli`.
+
+Development Setup
+-----------------
+
+This project is set up to build from VS Code using `arduino-cli`. The repository
+contains a VS Code build task at `.vscode/tasks.json`, so once the tools are
+installed you can compile with `Ctrl+Shift+B` or `Terminal > Run Build Task`.
+
+### Install Arduino CLI
+
+Install `arduino-cli` and confirm it is available from PowerShell:
+
+```powershell
+arduino-cli version
+```
+
+If this is a new Arduino CLI install, initialize its config:
+
+```powershell
+arduino-cli config init
+```
+
+Add the SparkFun Apollo3 board package URL. Do not put a backslash before
+`https`:
+
+```powershell
+arduino-cli config add board_manager.additional_urls https://raw.githubusercontent.com/sparkfun/Arduino_Apollo3/main/package_sparkfun_apollo3_index.json
+arduino-cli core update-index
+arduino-cli core install SparkFun:apollo3
+```
+
+Verify the board package is available:
+
+```powershell
+arduino-cli board listall artemis
+```
+
+### VS Code Setup
+
+Recommended VS Code extensions:
+
+* C/C++
+* Arduino, or any extension you prefer for serial monitor support
+
+The workspace already includes:
+
+* `.vscode/arduino.json` with board `SparkFun:apollo3:sfe_artemis_atp`
+* `.vscode/tasks.json` with the default build task
+* `.vscode/c_cpp_properties.json` with the repo include path
+
+The default VS Code build task runs:
+
+```powershell
+arduino-cli compile --fqbn SparkFun:apollo3:sfe_artemis_atp Firmware\OpenLog_Artemis --libraries libraries --output-dir Firmware\OpenLog_Artemis\build
+```
+
+Compiled outputs are written to:
+
+```text
+Firmware\OpenLog_Artemis\build
+```
+
+The `.bin` file produced by the current task is:
+
+```text
+Firmware\OpenLog_Artemis\build\OpenLog_Artemis.ino.bin
+```
+
+### Command-Line Build
+
+You can build without VS Code by running the same command from the repository
+root:
+
+```powershell
+arduino-cli compile --fqbn SparkFun:apollo3:sfe_artemis_atp Firmware\OpenLog_Artemis --libraries libraries --output-dir Firmware\OpenLog_Artemis\build
+```
+
+The firmware uses the project-local `libraries` directory. If a build reports a
+missing header, install the matching Arduino library and keep using the
+`--libraries libraries` option so the local library set is preferred.
 
 Documentation
 --------------

@@ -1051,7 +1051,7 @@ void menuConfigure_ublox(void *configPtr)
       if (sensorSetting->useAutoPVT == true) SerialPrintln(F("Yes"));
       else SerialPrintln(F("No"));
 
-      SerialPrintf2("16) Set number of environmental samples to collect before getting new GPS: %d\r\n", sensorSetting->sampleInt);
+      SerialPrintln(F("16) GPS schedule: every 9 minutes, aligned with the 3-minute environmental interval"));
 
       SerialPrintln(F("17) Reset GNSS to factory defaults"));
 
@@ -1114,12 +1114,7 @@ void menuConfigure_ublox(void *configPtr)
         sensorSetting->useAutoPVT ^= 1;
       else if (incoming == 16)
       {
-        SerialPrint(F("Enter GPS sample interval (1 to 10): "));
-        int amt = getNumber(menuTimeout); //x second timeout
-        if (amt < 1 || amt > 10)
-          SerialPrintln(F("Error: Out of range"));
-        else
-          sensorSetting->sampleInt = amt;
+        SerialPrintln(F("GPS logging is fixed to 9-minute RTC intervals for this firmware."));
       }
       else if (incoming == 17)
       {
@@ -1222,7 +1217,7 @@ void getUbloxDateTime(int &year, int &month, int &day, int &hour, int &minute, i
 
 boolean enableConstellations(sfe_ublox_gnss_ids_e id, uint16_t maxWait)
 {
-  boolean success;
+  boolean success = false;
 
   //Step through node list
   node *temp = head;
@@ -1241,25 +1236,31 @@ boolean enableConstellations(sfe_ublox_gnss_ids_e id, uint16_t maxWait)
         switch (id)
         {
           case SFE_UBLOX_GNSS_ID_GPS:
-            {
             success = nodeDevice->enableGNSS(nodeSetting->enableGPS, SFE_UBLOX_GNSS_ID_GPS, maxWait);
-            }
             break;
 
           case SFE_UBLOX_GNSS_ID_GLONASS:
-            {
-              success = nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GLONASS, maxWait);
-            }
+            success = nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GLONASS, maxWait);
             break;
 
           case SFE_UBLOX_GNSS_ID_GALILEO:
-            {
-              success = nodeDevice->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GALILEO, maxWait); 
-            }
+            success = nodeDevice->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GALILEO, maxWait);
+            break;
+
+          default:
+            success = false;
             break;
         }
+
+        setQwiicPullups(settings.qwiicBusPullUps);
+        break;
       }
-    }      
+    }
+
+    if (temp->deviceType == DEVICE_GPS_UBLOX)
+      break;
+
+    temp = temp->next;
   }
   if (success)
   {
@@ -1296,6 +1297,9 @@ void gnssFactoryDefault(void)
 
           nodeDevice->setI2COutput(COM_TYPE_UBX); //Set the I2C port to output UBX only (turn off NMEA noise)
           nodeDevice->saveConfigSelective(VAL_CFG_SUBSEC_IOPORT); //Save (only) the current ioPortsettings to flash and BBR
+          nodeDevice->enableGNSS(nodeSetting->enableGPS, SFE_UBLOX_GNSS_ID_GPS, 2500);
+          nodeDevice->enableGNSS(nodeSetting->enableGLO, SFE_UBLOX_GNSS_ID_GLONASS, 2500);
+          nodeDevice->enableGNSS(nodeSetting->enableGAL, SFE_UBLOX_GNSS_ID_GALILEO, 2500);
 
           setQwiicPullups(settings.qwiicBusPullUps); //Re-enable pullups
         }

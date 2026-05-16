@@ -5,6 +5,365 @@
 
 #define HELPER_BUFFER_SIZE 1024
 
+static void appendBlankFields(char *sdOutputData, size_t lenData, int fieldCount)
+{
+  for (int i = 0; i < fieldCount; i++)
+    strlcat(sdOutputData, ",", lenData);
+}
+
+static int countEnabledDeviceFields(node *temp)
+{
+  int fieldCount = 0;
+
+  switch (temp->deviceType)
+  {
+    case DEVICE_LOADCELL_NAU7802:
+      if (((struct_NAU7802 *)temp->configPtr)->log) fieldCount = 1;
+      break;
+    case DEVICE_DISTANCE_VL53L1X:
+      {
+        struct_VL53L1X *nodeSetting = (struct_VL53L1X *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logDistance) fieldCount++;
+          if (nodeSetting->logRangeStatus) fieldCount++;
+          if (nodeSetting->logSignalRate) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_GPS_UBLOX:
+      {
+        struct_ublox *nodeSetting = (struct_ublox *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logDate) fieldCount++;
+          if (nodeSetting->logTime) fieldCount++;
+          if (nodeSetting->logPosition) fieldCount += 2;
+          if (nodeSetting->logAltitude) fieldCount++;
+          if (nodeSetting->logAltitudeMSL) fieldCount++;
+          if (nodeSetting->logSIV) fieldCount++;
+          if (nodeSetting->logFixType) fieldCount++;
+          if (nodeSetting->logCarrierSolution) fieldCount++;
+          if (nodeSetting->logGroundSpeed) fieldCount++;
+          if (nodeSetting->logHeadingOfMotion) fieldCount++;
+          if (nodeSetting->logpDOP) fieldCount++;
+          if (nodeSetting->logiTOW) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_PROXIMITY_VCNL4040:
+      {
+        struct_VCNL4040 *nodeSetting = (struct_VCNL4040 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logProximity) fieldCount++;
+          if (nodeSetting->logAmbientLight) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_TEMPERATURE_TMP117:
+      {
+        struct_TMP117 *nodeSetting = (struct_TMP117 *)temp->configPtr;
+        if (nodeSetting->log && nodeSetting->logTemperature) fieldCount++;
+      }
+      break;
+    case DEVICE_PRESSURE_MS5637:
+      {
+        struct_MS5637 *nodeSetting = (struct_MS5637 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logPressure) fieldCount++;
+          if (nodeSetting->logTemperature) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_PRESSURE_LPS25HB:
+      {
+        struct_LPS25HB *nodeSetting = (struct_LPS25HB *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logPressure) fieldCount++;
+          if (nodeSetting->logTemperature) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_PHT_BME280:
+      {
+        struct_BME280 *nodeSetting = (struct_BME280 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logPressure) fieldCount++;
+          if (nodeSetting->logHumidity) fieldCount++;
+          if (nodeSetting->logAltitude) fieldCount++;
+          if (nodeSetting->logTemperature) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_UV_VEML6075:
+      {
+        struct_VEML6075 *nodeSetting = (struct_VEML6075 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logUVA) fieldCount++;
+          if (nodeSetting->logUVB) fieldCount++;
+          if (nodeSetting->logUVIndex) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_VOC_CCS811:
+      {
+        struct_CCS811 *nodeSetting = (struct_CCS811 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logTVOC) fieldCount++;
+          if (nodeSetting->logCO2) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_VOC_SGP30:
+      {
+        struct_SGP30 *nodeSetting = (struct_SGP30 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logTVOC) fieldCount++;
+          if (nodeSetting->logCO2) fieldCount++;
+          if (nodeSetting->logH2) fieldCount++;
+          if (nodeSetting->logEthanol) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_CO2_SCD30:
+      {
+        struct_SCD30 *nodeSetting = (struct_SCD30 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logCO2) fieldCount++;
+          if (nodeSetting->logHumidity) fieldCount++;
+          if (nodeSetting->logTemperature) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_PHT_MS8607:
+      {
+        struct_MS8607 *nodeSetting = (struct_MS8607 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logHumidity) fieldCount++;
+          if (nodeSetting->logPressure) fieldCount++;
+          if (nodeSetting->logTemperature) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_TEMPERATURE_MCP9600:
+      {
+        struct_MCP9600 *nodeSetting = (struct_MCP9600 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logTemperature) fieldCount++;
+          if (nodeSetting->logAmbientTemperature) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_HUMIDITY_AHT20:
+      {
+        struct_AHT20 *nodeSetting = (struct_AHT20 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logHumidity) fieldCount++;
+          if (nodeSetting->logTemperature) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_HUMIDITY_SHTC3:
+      {
+        struct_SHTC3 *nodeSetting = (struct_SHTC3 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logHumidity) fieldCount++;
+          if (nodeSetting->logTemperature) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_ADC_ADS122C04:
+      {
+        struct_ADS122C04 *nodeSetting = (struct_ADS122C04 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logCentigrade) fieldCount++;
+          if (nodeSetting->logFahrenheit) fieldCount++;
+          if (nodeSetting->logInternalTemperature) fieldCount++;
+          if (nodeSetting->logRawVoltage) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_PRESSURE_MPR0025PA1:
+      {
+        struct_MPR0025PA1 *nodeSetting = (struct_MPR0025PA1 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->usePSI) fieldCount++;
+          if (nodeSetting->usePA) fieldCount++;
+          if (nodeSetting->useKPA) fieldCount++;
+          if (nodeSetting->useTORR) fieldCount++;
+          if (nodeSetting->useINHG) fieldCount++;
+          if (nodeSetting->useATM) fieldCount++;
+          if (nodeSetting->useBAR) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_PARTICLE_SNGCJA5:
+      {
+        struct_SNGCJA5 *nodeSetting = (struct_SNGCJA5 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logPM1) fieldCount++;
+          if (nodeSetting->logPM25) fieldCount++;
+          if (nodeSetting->logPM10) fieldCount++;
+          if (nodeSetting->logPC05) fieldCount++;
+          if (nodeSetting->logPC1) fieldCount++;
+          if (nodeSetting->logPC25) fieldCount++;
+          if (nodeSetting->logPC50) fieldCount++;
+          if (nodeSetting->logPC75) fieldCount++;
+          if (nodeSetting->logPC10) fieldCount++;
+          if (nodeSetting->logSensorStatus) fieldCount++;
+          if (nodeSetting->logPDStatus) fieldCount++;
+          if (nodeSetting->logLDStatus) fieldCount++;
+          if (nodeSetting->logFanStatus) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_VOC_SGP40:
+      {
+        struct_SGP40 *nodeSetting = (struct_SGP40 *)temp->configPtr;
+        if (nodeSetting->log && nodeSetting->logVOC) fieldCount++;
+      }
+      break;
+    case DEVICE_PRESSURE_SDP3X:
+      {
+        struct_SDP3X *nodeSetting = (struct_SDP3X *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logPressure) fieldCount++;
+          if (nodeSetting->logTemperature) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_PRESSURE_MS5837:
+      {
+        struct_MS5837 *nodeSetting = (struct_MS5837 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logPressure) fieldCount++;
+          if (nodeSetting->logTemperature) fieldCount++;
+          if (nodeSetting->logDepth) fieldCount++;
+          if (nodeSetting->logAltitude) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_QWIIC_BUTTON:
+      {
+        struct_QWIIC_BUTTON *nodeSetting = (struct_QWIIC_BUTTON *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logPressed) fieldCount++;
+          if (nodeSetting->logClicked) fieldCount++;
+          if (nodeSetting->toggleLEDOnClick) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_BIO_SENSOR_HUB:
+      {
+        struct_BIO_SENSOR_HUB *nodeSetting = (struct_BIO_SENSOR_HUB *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logHeartrate) fieldCount++;
+          if (nodeSetting->logConfidence) fieldCount++;
+          if (nodeSetting->logOxygen) fieldCount++;
+          if (nodeSetting->logStatus) fieldCount++;
+          if (nodeSetting->logExtendedStatus) fieldCount++;
+          if (nodeSetting->logRValue) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_ISM330DHCX:
+      {
+        struct_ISM330DHCX *nodeSetting = (struct_ISM330DHCX *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logAccel) fieldCount += 3;
+          if (nodeSetting->logGyro) fieldCount += 3;
+          if (nodeSetting->logDataReady) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_MMC5983MA:
+      {
+        struct_MMC5983MA *nodeSetting = (struct_MMC5983MA *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logMag) fieldCount += 3;
+          if (nodeSetting->logTemperature) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_KX134:
+      {
+        struct_KX134 *nodeSetting = (struct_KX134 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logAccel) fieldCount += 3;
+          if (nodeSetting->logDataReady) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_ADS1015:
+      {
+        struct_ADS1015 *nodeSetting = (struct_ADS1015 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logA0) fieldCount++;
+          if (nodeSetting->logA1) fieldCount++;
+          if (nodeSetting->logA2) fieldCount++;
+          if (nodeSetting->logA3) fieldCount++;
+          if (nodeSetting->logA0A1) fieldCount++;
+          if (nodeSetting->logA0A3) fieldCount++;
+          if (nodeSetting->logA1A3) fieldCount++;
+          if (nodeSetting->logA2A3) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_BMP581:
+      {
+        struct_BMP581 *nodeSetting = (struct_BMP581 *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logPressure) fieldCount++;
+          if (nodeSetting->logTemperature) fieldCount++;
+        }
+      }
+      break;
+    case DEVICE_HUMIDITY_SHTSENSOR:
+      {
+        struct_SHTSensor *nodeSetting = (struct_SHTSensor *)temp->configPtr;
+        if (nodeSetting->log)
+        {
+          if (nodeSetting->logHumidity) fieldCount++;
+          if (nodeSetting->logTemperature) fieldCount++;
+        }
+      }
+      break;
+    default:
+      break;
+  }
+
+  return (fieldCount);
+}
+
+static void appendBlankDeviceValues(node *temp, char *sdOutputData, size_t lenData)
+{
+  appendBlankFields(sdOutputData, lenData, countEnabledDeviceFields(temp));
+}
+
 //Query each enabled sensor for its most recent data
 void getData(char* sdOutputData, size_t lenData)
 {
@@ -91,10 +450,15 @@ void getData(char* sdOutputData, size_t lenData)
 
   if (settings.logVIN)
   {
-    float voltage = readVIN();
-    olaftoa(voltage, tempData1, 2, sizeof(tempData1) / sizeof(char));
-    sprintf(tempData, "%s,", tempData1);
-    strlcat(sdOutputData, tempData, lenData);
+    if (logEnvironmentalThisReading)
+    {
+      float voltage = readVIN();
+      olaftoa(voltage, tempData1, 2, sizeof(tempData1) / sizeof(char));
+      sprintf(tempData, "%s,", tempData1);
+      strlcat(sdOutputData, tempData, lenData);
+    }
+    else
+      appendBlankFields(sdOutputData, lenData, 1);
   }
 
   if (online.IMU)
@@ -233,6 +597,17 @@ void gatherDeviceValues(char * sdOutputData, size_t lenData)
     //If this node successfully begin()'d
     if (temp->online == true)
     {
+      bool logThisDevice = logEnvironmentalThisReading;
+      if (temp->deviceType == DEVICE_GPS_UBLOX)
+        logThisDevice = logGpsThisReading;
+
+      if (logThisDevice == false)
+      {
+        appendBlankDeviceValues(temp, sdOutputData, lenData);
+        temp = temp->next;
+        continue;
+      }
+
       openConnection(temp->muxAddress, temp->portNumber); //Connect to this device through muxes as needed
 
       //Switch on device type to set proper class and setting struct
@@ -1468,6 +1843,10 @@ void gatherDeviceValues(char * sdOutputData, size_t lenData)
           break;
       }
 
+    }
+    else
+    {
+      appendBlankDeviceValues(temp, sdOutputData, lenData);
     }
     temp = temp->next;
   }
